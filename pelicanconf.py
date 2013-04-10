@@ -18,7 +18,7 @@ FILES_TO_COPY = (('extra/favicon.ico', 'favicon.ico'),
 
 MD_EXTENSIONS = ['codehilite', 'extra']
 OUTPUT_PATH = 'output/'
-STATIC_PATHS = ['images']
+STATIC_PATHS = ['images', 'extra']
 
 THEME = 'themes/tuxlite_tbs'
 
