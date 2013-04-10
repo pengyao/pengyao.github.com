@@ -14,7 +14,7 @@ DEFAULT_DATE = (2013,01,01,01,01,01)
 
 FILES_TO_COPY = (('extra/favicon.ico', 'favicon.ico'),
                  ('extra/CNAME', 'CNAME'),
-                 ('extra/README.md', 'README.md'),)
+                 ('extra/README', 'README'),)
 
 MD_EXTENSIONS = ['codehilite', 'extra']
 OUTPUT_PATH = 'output/'
