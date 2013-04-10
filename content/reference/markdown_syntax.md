@@ -1,6 +1,6 @@
 Title: Markdown语法说明(简体中文版)
 Tags: markdown, 中文 
-Category: 参考资料 
+Category: Reference 
 Slug: markdown-syntax-chinese
 Summary: 转载的Markdown语法
 

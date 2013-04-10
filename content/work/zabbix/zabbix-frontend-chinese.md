@@ -3,7 +3,7 @@ Date: 2013-04-10
 Author: pengyao
 Slug: zabbix-frontend-graph-chinese 
 Tags: zabbix, 中文
-Category: 工作相关 
+Category: Zabbix 
 Summary: Zabbix前端在调整语言为中文后，绘图部分字符将以方块显示，其原因是zabbix前端自带的字体并不支持中文的缘故，解决方法是增加支持中文的字体,推荐使用文泉驿
 
 
