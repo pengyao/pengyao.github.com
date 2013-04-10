@@ -17,6 +17,7 @@ SSH_USER=root
 SSH_TARGET_DIR=/var/www
 
 DROPBOX_DIR=~/Dropbox/Public/
+GITHUB=git@github.com:pengyao/pengyao.github.com.git
 
 help:
 	@echo 'Makefile for a pelican Web site                                        '
@@ -43,7 +44,7 @@ $(OUTPUTDIR)/%.html:
 	$(PELICAN) $(INPUTDIR) -o $(OUTPUTDIR) -s $(CONFFILE) $(PELICANOPTS)
 
 clean:
-	find $(OUTPUTDIR) -mindepth 1 -delete
+	find $(OUTPUTDIR) -mindepth 1 -delete 
 
 regenerate: clean
 	$(PELICAN) -r $(INPUTDIR) -o $(OUTPUTDIR) -s $(CONFFILE) $(PELICANOPTS)
@@ -69,8 +70,8 @@ dropbox_upload: publish
 ftp_upload: publish
 	lftp ftp://$(FTP_USER)@$(FTP_HOST) -e "mirror -R $(OUTPUTDIR) $(FTP_TARGET_DIR) ; quit"
 
-github: publish
-	ghp-import $(OUTPUTDIR)
-	git push origin gh-pages
+github: html
+	@git push -f $(GITHUB) develop:develop && echo "同步源码至github完成"
+	@cd $(OUTPUTDIR) && git init &&git add -A && git commit -m "生成网站静态页" && git push -f $(GITHUB) master:master && echo "同步静态页至github完成"	
 
 .PHONY: html help clean regenerate serve devserver publish ssh_upload rsync_upload dropbox_upload ftp_upload github

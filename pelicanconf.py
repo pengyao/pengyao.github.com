@@ -3,20 +3,31 @@
 
 AUTHOR = u'pengyao'
 SITENAME = u"PengYao's Weblog"
-SITEURL = ''
+SITEURL = 'http://pengyao.org'
 
 TIMEZONE = 'Asia/Taipei'
 
+
 DEFAULT_LANG = u'zh'
+DEFAULT_DATE_FORMAT = '%Y-%m-%d'
+DEFAULT_DATE = (2013,01,01,01,01,01)
+
+FILES_TO_COPY = (('extra/favicon.ico', 'favicon.ico'),
+                 ('extra/CNAME', 'CNAME'),)
+
+MD_EXTENSIONS = ['codehilite', 'extra']
+OUTPUT_PATH = 'output/'
+STATIC_PATHS = ['images']
+
+THEME = 'themes/tuxlite_tbs'
 
 # Blogroll
-LINKS =  (('Pelican', 'http://docs.notmyidea.org/alexis/pelican/'),
-          ('Python.org', 'http://python.org'),
-          ('Jinja2', 'http://jinja.pocoo.org'),
-          ('You can modify those links in your config file', '#'),)
+LINKS =  ((u'SaltStack中文社区', 'http://saltstack.cn/'),)
 
 # Social widget
-SOCIAL = (('You can add links in your config file', '#'),
-          ('Another social link', '#'),)
+SOCIAL = (('Weibo', 'http://weibo.com/yaoxuanwei'),)
+
+GITHUB_URL = "https://github.com/pengyao"
 
 DEFAULT_PAGINATION = 10
+SUMMARY_MAXLENGTH = 100
