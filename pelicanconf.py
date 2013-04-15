@@ -29,6 +29,7 @@ LINKS =  ((u'SaltStack中文社区', 'http://saltstack.cn/'),)
 SOCIAL = (('Weibo', 'http://weibo.com/yaoxuanwei'),)
 
 GITHUB_URL = "https://github.com/pengyao"
+DISQUS_SITENAME = "pengyao-blog"
 
 DEFAULT_PAGINATION = 10
 SUMMARY_MAXLENGTH = 100
