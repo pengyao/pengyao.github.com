@@ -3,7 +3,7 @@ Date: 2013-04-15
 Author: pengyao
 Slug: ipv6-resource
 Tags: Linux,ipv6,resource
-Category: IPV6
+Category: IPv6
 Summary: 近期有业务需要从IPV4升级到IPV6，整理一些参考资料，学习使用
 
 
