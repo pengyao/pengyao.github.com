@@ -3,7 +3,7 @@ Date: 2013-04-19
 Author: pengyao
 Slug: using_pillar_data_in_saltstack
 Tags: saltstack, pillar
-Catagory: SaltStack
+Category: SaltStack
 Summary: 在SaltStack中，Pillar作为一个定义minion全局数据的接口，由于pillar数据只会存放在匹配的minion上，所以常用pillar来存放敏感类的数据。 本文将带你学习在SaltStack中如何利用Pillar。
 
 * 原文出处: <http://intothesaltmine.org/blog/html/2013/02/28/using_pillar_data_in_saltstack.html>
@@ -33,7 +33,7 @@ Pillar做为一允许你分发定义的全局数据到目标minion上的接口�
 
 上边的例子定义了*packages*对所有的minion有效，*database*只对名字为'alpha'的minion有效.
 
-## /srv/pillar/packages.sls - Pillar Data ## 
+## /srv/pillar/packages.sls - Pillar Data 
 
 通过例子*packages*文件定义不同Linux发行版的软件包名字，通过Pillar进行中心控制它们，这样就可以在State文件中引用Pillar数据使State看起来更简单.
 
