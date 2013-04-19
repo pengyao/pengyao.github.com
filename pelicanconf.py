@@ -26,7 +26,8 @@ THEME = 'themes/tuxlite_tbs'
 LINKS =  ((u'SaltStack中文社区', 'http://saltstack.cn/'),)
 
 # Social widget
-SOCIAL = (('Weibo', 'http://weibo.com/yaoxuanwei'),)
+SOCIAL = (('Github', 'https://github.com/pengyao'),
+          ('Weibo', 'http://weibo.com/yaoxuanwei'),)
 
 GITHUB_URL = "https://github.com/pengyao"
 DISQUS_SITENAME = "pengyao-blog"
