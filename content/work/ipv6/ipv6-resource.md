@@ -2,10 +2,11 @@ Title: IPv6学习资源
 Date: 2013-04-15
 Author: pengyao
 Slug: ipv6-resource
-Tags: Linux,ipv6,resource
+Tags: Linux,IPv6,resource
 Category: IPv6
 Summary: 近期有业务需要从IPV4升级到IPV6，整理一些参考资料，学习使用
-
+## RFC ##
+* RFC4291(IPv6 Addressing Architecture): <http://www.ietf.org/rfc/rfc4291.txt>
 ## OS ##
 * Linux IPv6 HOWTO(en): <http://www.tldp.org/HOWTO/Linux+IPv6-HOWTO/>
 * Linux IPv6 HOWTO(zh_tw): <http://www.linux.org.tw/CLDP/OLD/Linux-IPv6-HOWTO.html>
