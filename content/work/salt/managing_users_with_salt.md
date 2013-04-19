@@ -3,7 +3,7 @@ Date: 2013-04-19
 Author: pengyao
 Slug: managing_user_with_salt
 Tags: saltstack, 管理用户, 中文
-Catagory: SaltStack
+Category: SaltStack
 Summary: 利用Salt内置的user模块对系统用户进行管理
 
 * 原文出处: <http://intothesaltmine.org/blog/html/2012/12/11/managing_users_with_salt.html>
