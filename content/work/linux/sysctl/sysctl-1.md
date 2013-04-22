@@ -172,4 +172,5 @@ syn cookies在一定程度上能缓解"syn flood attack"，建议生产系统中
 
 
 [RFC2883]: http://tools.ietf.org/html/rfc2883
+[记一次TIME_WAIT网络故障]: http://huoding.com/2012/01/19/142
 
