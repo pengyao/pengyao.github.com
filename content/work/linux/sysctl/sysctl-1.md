@@ -143,7 +143,7 @@ syn cookies在一定程度上能缓解"syn flood attack"，建议生产系统中
 ### net.ipv4.tcp_tw_recycle ###
 是否开启TIME-WAIT快速重用功能，不建议将该值设置成1，除非你知道该参数会带来什么影响
 
-火丁笔记之前有一篇文章《[记一次TIME_WAIT网络故障][]》，有关于本参数的分析，推荐一看
+火丁笔记之前有一篇文章[记一次TIME_WAIT网络故障][]，有关于本参数的分析，推荐一看
 
 ### net.ipv4.tcp_tw_reuse ###
 允许对新连接重用TIME-WAIT sockets
