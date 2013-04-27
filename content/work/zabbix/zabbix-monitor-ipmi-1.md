@@ -25,6 +25,7 @@ Summary: IDC空调开始不给力了，为了防患未然，需要对服务器�
 * IBM DeveloperWorks -- 使用ipmitool实现Linux系统下对服务器的ipmi管理: <http://www.ibm.com/developerworks/cn/linux/l-ipmi/>
 * Dell -- Managing Dell PowerEdge Servers Using IPMItool: <http://www.dell.com/downloads/global/power/ps4q04-20040204-Murphy.pdf>
 * Zabbix IPMI checks: <https://www.zabbix.com/documentation/2.0/manual/config/items/itemtypes/ipmi>
+* 使用IPMITOOL实现终端重定向(课外读物): <http://docs.linuxtone.org/ebooks/Dell/ipmitool.pdf>
 
 
 ## 配置IPMI ##
