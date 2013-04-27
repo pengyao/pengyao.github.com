@@ -1,4 +1,4 @@
-Title: 基于ZabbixIPMI监控服务器硬件状况
+Title: 基于Zabbix IPMI监控服务器硬件状况
 Date: 2013-04-27
 Author: pengyao
 Slug: zabbix-monitor-ipmi-1
