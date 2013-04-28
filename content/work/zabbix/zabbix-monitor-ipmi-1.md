@@ -80,7 +80,7 @@ Summary: IDC空调开始不给力了，为了防患未然，需要对服务器�
     # sed -i '/# StartIPMIPollers=0/aStartIPMIPollers=5' zabbix_server.conf
     # service zabbix-server restart
 
-导入监控模板(模板下载地址: <https://raw.github.com/pengyao/zabbix/master/DELL-R415/templates/zbx_templates_DELL_R415.xml>)
+导入监控模板(模板下载地址: <https://raw.github.com/pengyao/zabbix/master/Server/templates/zbx_templates_DELL_R415.xml>)
 
 添加监控主机，关联上本模板，并在**IPMI**页面，设置*Authentication algorithm*为*Default*, *Privilege level*为*User*, *Username*为*sensor*, *Password*为*sensor_pass*，保存即可
 
