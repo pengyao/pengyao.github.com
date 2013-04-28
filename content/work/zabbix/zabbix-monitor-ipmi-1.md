@@ -85,3 +85,5 @@ Summary: IDC空调开始不给力了，为了防患未然，需要对服务器�
 添加监控主机，关联上本模板，并在**IPMI**页面，设置*Authentication algorithm*为*Default*, *Privilege level*为*User*, *Username*为*sensor*, *Password*为*sensor_pass*，保存即可
 
 
+## 总结 ##
+在应用过程中，发现当前Zabbix IPMI监控效率较低，希望新版本能够有所改善
