@@ -33,7 +33,7 @@ Summary: 从Zabbix 2.0开始，自带了一个用于监控JMX应用的程序，�
         # echo 'export JAVA_HOME PATH' >> /etc/bashrc
         # source /etc/bashrc
  
-### 下载Zabbix安装包(可选) ###
+### 下载Zabbix安装包 ###
 * 如果需要安装Zabbix Java GateWay的主机并没有下载Zabbix安装包，需要下载Zabbix安装包,下载地址: <http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.0.6/zabbix-2.0.6.tar.gz?r=http%3A%2F%2Fwww.zabbix.com%2Fdownload.php&ts=1367766309&use_mirror=jaist> 
 * 解压zabbix安装包
 
@@ -62,27 +62,25 @@ Zabbix中自带的zabbix_java_gateway维护脚本比较差，重写了维护脚�
 ## 配置Zabbix Java GateWay ##
 * 配置文件: /etc/zabbix/zabbix_java_gateway.conf
 * 支持的配置选项为:
- 
-名称            |    选项说明
---------------- | ----------------------------
-LISTEN_IP       | 指定bind的地址,默认值为0.0.0.0
-LISTEN_PORT     | 指定bind的端口,默认值为10052
-PID_FILE        | 指定PID文件存放目录，默认为 /tmp/zabbix_java.pid
-START_POLLERS   | 指定启动多少进程, 默认为5
+
+    名称            |    选项说明
+    --------------- | ----------------------------
+    LISTEN_IP       | 指定bind的地址,默认值为0.0.0.0
+    LISTEN_PORT     | 指定bind的端口,默认值为10052
+    PID_FILE        | 指定PID文件存放目录，默认为 /tmp/zabbix_java.pid
+    START_POLLERS   | 指定启动多少进程, 默认为5
 
 * Zabbix Java GateWay启动后，也需要在Zabbix Server/Proxy上进行配置,对应的配置文件选项为:
  
-名称             |    选项说明
----------------- | ----------------------------
-JavaGateway      | 指定Zabbix Java GateWay地址
-JavaGatewayPort  | 指定Zabbix Java GateWay端口，默认为10052
-StartJavaPollers | 指定启动时启动的Java Pollers数量
+    名称             |    选项说明
+    ---------------- | ----------------------------
+    JavaGateway      | 指定Zabbix Java GateWay地址
+    JavaGatewayPort  | 指定Zabbix Java GateWay端口，默认为10052
+    StartJavaPollers | 指定启动时启动的Java Pollers数量
 
-
-* 注意：Zabbix Server/Proxy中的StartJavaPollers要小于等于Zabbix Java GateWay配置文件中的START_POLLERS
-* 关于如何添加JMX监控，请访问: <https://www.zabbix.com/documentation/2.0/manual/config/items/itemtypes/jmx_monitoring>
-* 小贴士：Zabbix Java GateWay类似于Proxy(只是不存储数据和配置)，所以在使用Proxy/Node等分布式环境中，推荐在每个区域部署对应的Zabbix Java GateWay
-
+* **注意**：Zabbix Server/Proxy中的StartJavaPollers要小于等于Zabbix Java GateWay配置文件中的START_POLLERS
+* 关于如何添加JMX监控项，请访问: <https://www.zabbix.com/documentation/2.0/manual/config/items/itemtypes/jmx_monitoring>
+* **小贴士**：Zabbix Java GateWay类似于Proxy(只是不存储数据和配置)，所以在使用Proxy/Node等分布式环境中，推荐在每个区域部署对应的Zabbix Java GateWay
 
 
 
