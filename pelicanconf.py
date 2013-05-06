@@ -16,7 +16,7 @@ FILES_TO_COPY = (('extra/favicon.ico', 'favicon.ico'),
                  ('extra/CNAME', 'CNAME'),
                  ('extra/README', 'README'),)
 
-MD_EXTENSIONS = ['codehilite', 'extra', 'toc']
+MD_EXTENSIONS = ['codehilite', 'extra', 'toc', 'tables']
 OUTPUT_PATH = 'output/'
 STATIC_PATHS = ['images', 'extra']
 
