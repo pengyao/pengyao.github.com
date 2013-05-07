@@ -31,6 +31,8 @@ SOCIAL = (('Github', 'https://github.com/pengyao'),
 
 GITHUB_URL = "https://github.com/pengyao"
 DISQUS_SITENAME = "pengyao-blog"
+BAIDU_TONGJI = "87206c0d4319a1f476378557aa7c50ca"
 
 DEFAULT_PAGINATION = 10
 SUMMARY_MAXLENGTH = 100
+
