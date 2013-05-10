@@ -1,4 +1,5 @@
 Title: Markdown语法说明(简体中文版)
+Date: 1989-06-04
 Tags: markdown, 中文 
 Category: Reference 
 Slug: markdown-syntax-chinese
