@@ -1,4 +1,4 @@
-Title: Zabbix触发器支持的函数说明
+Title: 【翻译】Zabbix触发器支持的函数说明
 Date: 2013-05-06 00:00:00
 Author: pengyao
 Slug: zabbix-triggers-functions 
