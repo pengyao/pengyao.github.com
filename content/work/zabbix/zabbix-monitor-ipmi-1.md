@@ -45,7 +45,7 @@ Summary: IDC空调开始不给力了，为了防患未然，需要对服务器�
 
     #!bash
     # ipmitool lan set 1 ipaddr 10.0.2.121
-    # ipmitool lan set 1 netmaks 255.255.255.0
+    # ipmitool lan set 1 netmask 255.255.255.0
     # ipmitool lan set 1 defgw ipaddr 10.0.2.1
     # ipmitool lan print 1
 将本机的IPMI地址配置为10.0.2.121/24,网关为10.0.2.1
