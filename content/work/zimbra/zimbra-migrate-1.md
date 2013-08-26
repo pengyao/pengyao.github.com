@@ -21,3 +21,8 @@ POP3 Server会对每一个进入的邮件分配个唯一的数字(unique number,
     # zmpro ma <account> zimbraPrefPop3DownloadSince $(date "+%Y%m%d%H%M%S"Z)
 
 
+
+
+
+
+[Zimbra]: http://www.zimbra.com
