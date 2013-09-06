@@ -23,7 +23,9 @@ STATIC_PATHS = ['images', 'extra']
 THEME = 'themes/tuxlite_tbs'
 
 # Blogroll
-LINKS =  ((u'SaltStack中文社区', 'http://saltstack.cn/'),)
+LINKS =  ((u'中国SaltStack用户组', 'http://saltstack.cn/'),
+          (u'静思学吧', 'http://www.jsxubar.info/'),
+         )
 
 # Social widget
 SOCIAL = (('Github', 'https://github.com/pengyao'),
