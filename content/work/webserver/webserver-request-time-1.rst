@@ -3,7 +3,7 @@
 
 :date: 2013-05-15
 :tags: request time, 请求处理时间, webserver, nginx, apache, tomcat, resin, IIS
-:catagory: WebServer
+:category: WebServer
 :slug: webserver-request-time-1
 :author: pengyao
 :summary: 不同WebServer的日志格式中对于请求处理时间使用的关键字及单位是不相同的，对常用的WebServer进行汇总.

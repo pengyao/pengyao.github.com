@@ -3,7 +3,7 @@ Salt Runners manage学习
 
 :date: 2013-09-24
 :tags: saltstack, runners, manage, status
-:catagory: SaltStack
+:category: SaltStack
 :slug: salt_runners_manage_01
 :author: pengyao
 :summary: 参考手册和源码对Salt Runners manage进行学习

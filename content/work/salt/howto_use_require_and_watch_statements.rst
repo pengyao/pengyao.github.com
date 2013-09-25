@@ -3,7 +3,7 @@
 
 :date: 2013-09-18
 :tags: saltstack, require, watch, order
-:catagory: SaltStack
+:category: SaltStack
 :slug: howto_to_use_require_and_watch_statements
 :author: pengyao
 :summary: 翻译了intothesaltmine的《HOW TO USE REQUIRE AND WATCH STATEMENTS》，本文主要讲述在SaltStack中，如何使用require及watch语法来确定state间的依赖关系及执行顺序.
