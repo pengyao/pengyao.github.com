@@ -12,7 +12,7 @@ Salt Runners manage学习
 * Salt Runners manage源码: https://github.com/saltstack/salt/blob/develop/salt/runners/manage.py
 
 
-下午灿哥在群里边分享了``salt-run manage.status``的用法，用于检查minion当前是否存活(可连接). 这个功能果然不错，索性就打开对应的源码，对manage所有的方法进行一次学习
+下午灿哥在群里边分享了 ``salt-run manage.status`` 的用法，用于检查minion当前是否存活(可连接). 这个功能果然不错，索性就打开对应的源码，对manage所有的方法进行一次学习
 
 * 版本: 0.16.3
 
