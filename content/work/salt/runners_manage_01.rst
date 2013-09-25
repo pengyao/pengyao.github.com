@@ -86,9 +86,9 @@ up
 
 * 总结: 和楼上类似
 
-version
+versions
 ======================
-* 使用方法: ``salt-run manage.version``
+* 使用方法: ``salt-run manage.versions``
 
 * 功能: 输出所有存活的minion的版本和master的版本对比情况
 
