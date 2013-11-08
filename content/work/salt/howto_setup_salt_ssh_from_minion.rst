@@ -170,6 +170,7 @@ Salt 0.17版本已发布，该版本中重要的特性是引入了Salt SSH系统
   {{eachminion}}:
     host: {{each_mine[0]}}
     user: salt 
+    sudo: True
   {% endfor -%}  
 
 生成Salt Rosters
