@@ -9,7 +9,7 @@
 :summary: Salt 0.17版本重要的特性是引入了Salt SSH系统，本文基于已有的SaltStack Master/Minions环境,快速构建Salt SSH维护环境, 提供Salt多重维护方式.
 
 
-Salt 0.17版本已发布，该版本中重要的特性是引入了Salt SSH系统，提供了无需Minion、基于SSH的维护方式。原有的Salt维护环境已经初具规模，再手动重新构建Salt SSH环境成本较高。偷懒是人的天性，如何利用原有SaltStack Master/Minions环境，快速构建新的Salt SSH维护环境将是本文的主题.
+Salt 0.17版本已发布，该版本中重要的特性是引入了Salt SSH系统，提供了无需Minion、基于SSH的维护方式。原有的Salt维护环境已经初具规模，再手动重新构建Salt SSH环境成本较高。偷懒是人的天性，利用原有SaltStack Master/Minions环境，如何快速构建新的Salt SSH维护环境将是本文的主题.
 
 前置阅读
 ***********************
