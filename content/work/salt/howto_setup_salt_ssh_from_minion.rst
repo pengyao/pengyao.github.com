@@ -51,8 +51,8 @@ Salt 0.17版本已发布，该版本中重要的特性是引入了Salt SSH系统
   ## 生成Master SSH key
   cd /etc/salt/pki/master/ssh/
   ssh-keygen -t rsa -P "" -f salt-ssh.rsa
-  ## 查看public key (稍后使用)
-  cat salt-ssh.rsa.pub
+  ## 复制master public key至 salt fileserver 
+  cp /etc/salt/pki/master/ssh/salt-ssh.rsa.pub /srv/salt/salt/files/salt-ssh.rsa.pub
 
 编写用于Salt SSH管理的用户及key认证状态管理文件, */srv/salt/salt/ssh/init.sls*  
 
@@ -68,39 +68,13 @@ Salt 0.17版本已发布，该版本中重要的特性是引入了Salt SSH系统
       - source: salt://salt/files/etc/sudoers.d/salt
       - require:
         - user: salt-user
-
-  salt-ssh-dir:
-    file.directory:
-      - name: /home/salt/.ssh
-      - user: salt
-      - group: salt
-      - mode: 700
-      - require:
-        - user: salt-user
-
-  salt-authorized_keys:
-    file.managed:
-      - name: /home/salt/.ssh/authorized_keys
-      - user: salt
-      - group: salt
-      - mode: 0600
-      - makedirs: True
-      - require:
-        - user: salt-user
-        - file: salt-ssh-dir
-
+          
   salt-master-key:
-    {# salt master public key #}
-    file.append:
-      - name: /home/salt/.ssh/authorized_keys
-      - text: 
-        - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA1y121A7tyjzLhBIPM4y0q4EsyvXTkH5mOpzMYTvYgssOTpCMIyCPfhd/zr8UjOx66ndlodLXm86ePZhUdQY4xl/DULqgzQUzzi/G+R3RR4YWuhmIQiC3z0JLgLDZlK07QTeG+Lw2dWFpxYdY26ZN6E1juWvdxfAqJ4NdYfXmo0MIHyXfnOSE/JmLYBF8sNdtfZxRMVETGs4dw4upypM0swzpuKmWZD8qzteeXZH7NF6tUICaemXzTppaNwPafyod2nTLH5ixf9xYWoyvfnpD2YROQLJoe7pJvxHiiOmBpga1c+9g57soeaj+tBKT66+U4fwFKJDcLEztcvsrkYn6Lw== root@salt
-    - require:
-      - file: salt-authorized_keys
-
-.. note::
-
-  请将salt-master-key中的内容替换为真实环境之前查看的master public key
+    ssh_auth.present:
+      - user: salt
+      - source: salt://salt/files/salt-ssh.rsa.pub
+      - require:
+        - user: salt-user        
 
 
 *salt* 用户对应的sudoer文件 */srv/salt/salt/files/etc/sudoers.d/salt*::
