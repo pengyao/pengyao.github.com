@@ -76,7 +76,7 @@ Salt 0.17版本已发布，该版本中重要的特性是引入了Salt SSH系统
       - group: salt
       - mode: 700
       - require:
-      - user: salt-user
+        - user: salt-user
 
   salt-authorized_keys:
     file.managed:
