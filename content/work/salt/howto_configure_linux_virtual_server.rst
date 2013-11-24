@@ -197,7 +197,7 @@
     
 总结
 ============
-通过SaltStack LVS模块，可以快速的查询LVS状态，执行LVS常用指令及完成LVS的配置管理。如有需要调整RealServer规则或添加新的RealServer, 只需要修改*/srv/pillar/lvs/loadblance.sls*，然后应用配置即可.
+通过SaltStack LVS模块，可以快速的查询LVS状态，执行LVS常用指令及完成LVS的配置管理。如有需要调整RealServer规则或添加新的RealServer, 只需要修改 */srv/pillar/lvs/loadblance.sls* ，然后应用配置即可.
 
 本文中所用到的代码已经上传至github，传送门: https://github.com/pengyao/salt-lvs
 
