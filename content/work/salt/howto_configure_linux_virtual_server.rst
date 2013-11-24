@@ -17,7 +17,7 @@
 环境说明
 ***************
 * 三台服务器用于LVS集群，其中主机名为lvs的担当的角色为loadblance，对应的IP地址为192.168.36.10；主机名为web-01和web-02的主机担当的角色为RealServer, 对应的IP地址分别为192.168.36.11及192.168.36.12
-* LVS VIP: 192.168.36.33, Port: 80, VIP绑定在lvs的eth0口
+* LVS VIP: 192.168.36.33, Port: 80, VIP绑定在lvs的eth1口
 * 最最重要的是loadblance主机为Linux，并已安装ipvsadm, Windows/Unix等主机的同学请绕过吧，这不是我的错......
 
 开工
