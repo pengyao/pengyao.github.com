@@ -151,7 +151,7 @@ Salt 0.17版本已发布，该版本中重要的特性是引入了Salt SSH系统
 
 .. code-block:: bash
 
-  salt 'salt' state.sls salt.ssl.roster
+  salt 'salt' state.sls salt.ssh.roster
 
 
 应用Salt SSH
