@@ -20,7 +20,7 @@ CentOS平台上如何加入World Community Grid参与运算
 注册World Community Grid账户
 ********************************
 
-访问: `World Community Grid 注册URL <https://secure.worldcommunitygrid.org/reg/viewRegister.do>`_ 进行账户注册。注册完毕后，可以在 *settings* 中设置参与哪些项目的运算，并在My Profile页面获取到 *Weak Account Key*.
+访问 `World Community Grid 注册URL <https://secure.worldcommunitygrid.org/reg/viewRegister.do>`_ 进行账户注册。注册完毕后，可以在 *settings* 中设置参与哪些项目的运算，并在My Profile页面获取到 *Weak Account Key*.
 
 安装配置Boinc Client
 ************************
