@@ -25,6 +25,7 @@ THEME = 'themes/tuxlite_tbs'
 # Blogroll
 LINKS =  ((u'中国SaltStack用户组', 'http://saltstack.cn/'),
           (u'静思学吧', 'http://www.jsxubar.info/'),
+          (u'HeyLinux', 'http://heylinux.com/'),
          )
 
 # Social widget
