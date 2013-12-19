@@ -201,7 +201,7 @@ job管理
          -H "X-Auth-Token: 8e211da5d6bbb51fbffe6468a3ca0c6a24b3e535" \
          -d client='local' \
          -d tgt='*' \
-         -d fun='test.ping' \
+         -d fun='test.ping' 
 
 也可以请求 *https://192.168.38.10:8000/run* ，不过该方法为一次性使用，无法使用Token, 只能使用username和password
          
@@ -233,6 +233,27 @@ job管理
     - down: []
       up:
       - minion-01.example.com
+
+Targeting
+================
+谢谢 *苦咖啡* 提供
+
+如果想在api中使用salt的 `Targeting <http://docs.saltstack.com/topics/targeting/>`_ 功能，可以在Request的Post Data中增加 *expr_form* (默认是 *glob* )及值即可:
+
+依然以curl为例:
+
+.. code-block:: bash
+
+    curl -k https://192.168.38.10:8000/ \
+         -H "Accept: application/x-yaml" \
+         -H "X-Auth-Token: 8e211da5d6bbb51fbffe6468a3ca0c6a24b3e535" \
+         -d client='local' \
+         -d tgt='webcluster' \
+         -d expr_form='nodegroup' \
+         -d fun='test.ping'
+ 
+将利用 `nodegroup <http://docs.saltstack.com/topics/targeting/nodegroups.html>`_ 匹配到名为 *webcluster* 的target。
+ 
 
 
 总结
