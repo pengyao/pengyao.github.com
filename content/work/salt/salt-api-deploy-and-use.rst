@@ -74,6 +74,8 @@ Salt-API配置
       pam:
         pengyao:
           - .*
+          - '@wheel'
+          - '@runner'
 
 * 配置Salt-API, */etc/salt/master.d/api.conf*
 
@@ -233,6 +235,42 @@ job管理
     - down: []
       up:
       - minion-01.example.com
+
+运行wheel
+=============
+* 注意: 由于当前版本的Salt Master有一处bug, 导致wheel的结果无法返回(`https://groups.google.com/forum/#!topic/salt-users/9HcZ6R7MB0g <https://groups.google.com/forum/#!topic/salt-users/9HcZ6R7MB0g>`_)，官方在最新的代码中已经修复,使用时需要使用github中最新的salt代码
+
+* Request(例子为查询所有的minion key列表)
+
+.. code-block:: bash
+
+    curl -k https://localhost:8000/ \
+         -H "Accept: application/x-yaml" \
+         -H "X-Auth-Token: 8e211da5d6bbb51fbffe6468a3ca0c6a24b3e535" \
+         -d client='wheel' \
+         -d fun='key.list_all'
+
+* Response
+
+.. code-block:: yaml
+
+    return:
+    - data:
+        _stamp: 2013-12-23_04:54:22.483159
+        fun: wheel.key.list_all
+        jid: '20131223045422481844'
+        return:
+          local:
+          - master.pem
+          - master.pub
+          minions:
+          - minion-01.example.com
+          minions_pre: []
+          minions_rejected: []
+         success: true
+         tag: salt/wheel/20131223045422481844
+         user: pengyao
+       tag: salt/wheel/20131223045422481844
 
 Targeting
 ================
