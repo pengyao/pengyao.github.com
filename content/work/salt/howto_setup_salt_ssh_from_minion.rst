@@ -111,7 +111,7 @@ Salt 0.17版本已发布，该版本中重要的特性是引入了Salt SSH系统
 
 .. code-block:: bash
 
-  salt '*' saltuitl.refresh_pillar
+  salt '*' saltutil.refresh_pillar
   salt '*' pillar.get mine_functions
 
 更新Salt Mine，并测试获取所有Minions的ID及IP
