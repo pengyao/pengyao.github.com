@@ -184,7 +184,7 @@ parameters       pillar
 
 总结
 ********************
-salt pillar当前较弱, 只支持include, 并不支持extend等更高级的功能. 通过与reclass的整合, 借助reclass灵活的继承功能(支持多级继承), 提供专业的ENC服务, 弥补了pillar的不足. 
+salt pillar当前较弱, 只支持include, 并不支持extend等更高级的功能. 通过与reclass的整合, 借助reclass灵活的继承功能(支持多级继承), 为Salt提供专业的ENC服务, 弥补了pillar的不足. 
 
 当前reclass的功能相对较弱, 不过可以看到的是如Class subdirectories这类实用的功能已经在to-do list中, 期待reclass功能更为强大.
    
