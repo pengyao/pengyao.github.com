@@ -86,7 +86,7 @@ reach shift register (octal)
 
 标记该peer的reach计数, 该值是8进制数.
 
-该值是写本文的直接原因, 因为发现之对该值的理解是错误的. 之前的理解是参照`鸟哥书中的描述 <http://linux.vbird.org/linux_server/0440ntp.php#server_start>`_ , *已經向上層 NTP 伺服器要求更新的次數*. 而实际上该值并不是计数器, 而是表示最近八次ntp查询的reach状态.
+该值是写本文的直接原因, 因为发现之对该值的理解是错误的. 之前的理解是参照 `鸟哥书中的描述 <http://linux.vbird.org/linux_server/0440ntp.php#server_start>`_ , *已經向上層 NTP 伺服器要求更新的次數*. 而实际上该值并不是计数器, 而是表示最近八次ntp查询的reach状态.
 
 该值为8进制数, 由三个数组组成, 每个八进制对应3比特. 起始值是0, 之后的比特将每次进行完pool之后左移一位(如果收到ntp回应,则设置为1, 反之为0) 
 
