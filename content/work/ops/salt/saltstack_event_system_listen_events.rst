@@ -84,9 +84,11 @@ SaltStack 0.10版本中, 新增了Event系统, 官方在 `Release Notes <http://
     {'tag': '20140417141839587706', 'data': {'fun_args': ['20140417141834578593'], 'jid': '20140417141839587706', 'return': {'tgt_type': 'glob', 'jid': '20140417141834578593', 'tgt': '*', 'pid': 2143, 'ret': '', 'user': 'sudo_vagrant', 'arg': ['sleep 6; echo hello world'], 'fun': 'cmd.run'}, 'retcode': 0, 'success': True, 'cmd': '_return', '_stamp': '2014-04-17T14:18:39.605262', 'fun': 'saltutil.find_job', 'id': 'salt-minion-01.example.com'}}
     ------
     {'tag': 'salt/job/20140417141839587706/ret/salt-minion-01.example.com', 'data': {'fun_args': ['20140417141834578593'], 'jid': '20140417141839587706', 'return': {'tgt_type': 'glob', 'jid': '20140417141834578593', 'tgt': '*', 'pid': 2143, 'ret': '', 'user': 'sudo_vagrant', 'arg': ['sleep 6; echo hello world'], 'fun': 'cmd.run'}, 'retcode': 0, 'success': True, 'cmd': '_return', '_stamp': '2014-04-17T14:18:39.605321', 'fun': 'saltutil.find_job', 'id': 'salt-minion-01.example.com'}}
+    ------
     {'tag': '20140417141834578593', 'data': {'fun_args': ['sleep 6; echo hello world'], 'jid': '20140417141834578593', 'return': 'hello world', 'retcode': 0, 'success': True, 'cmd': '_return', '_stamp': '2014-04-17T14:18:40.604562', 'fun': 'cmd.run', 'id': 'salt-minion-01.example.com'}}
+    ------
     {'tag': 'salt/job/20140417141834578593/ret/salt-minion-01.example.com', 'data': {'fun_args': ['sleep 6; echo hello world'], 'jid': '20140417141834578593', 'return': 'hello world', 'retcode': 0, 'success': True, 'cmd': '_return', '_stamp': '2014-04-17T14:18:40.604628', 'fun': 'cmd.run', 'id': 'salt-minion-01.example.com'}}
-
+    ------
 
 除了之前test.ping测试类似的输出外, 可以看到tag为 *new_job* 的event产生后的5秒, 自动产生了一个fun值为 *saltutil.find_job*, 其arg为之前new_job的jid的event. 然后minion返回之前运行的fun值为 *cmd.run* 对应的进行运行信息(pid等信息, 已确保任务正在被执行).
 
