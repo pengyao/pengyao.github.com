@@ -8,12 +8,14 @@ Salt中Pillar那点事
 :author: pengyao
 :summary: 在 `SaltStack`_ 中, Pillar作为定义minion全局数据的接口. 哪么在Salt内部, Pillar是如何工作的? 在哪些情况下, 使用Pillar需要先执行刷新操作? 而哪些又不需要?
 
-Pillar基本简介
+基本简介
 ****************
 
 在 `SaltStack`_ 中, Pillar作为定义minion全局数据的接口. 默认存储在master端, Minion启动时会连接master获取最新的pillar数据. Pillar使用类似于State Tree的结构, 默认使用 `YAML` 作为其描述格式, 在Minion内部最终转换成 `Python字典 <https://docs.python.org/2/tutorial/datastructures.html#dictionaries>`_ .
 
 那么在Salt内部, Pillar是如何工作的? 在哪些情况下,需要先执行刷新Pillar操作? 而哪些又不需要?
+
+本文基于 `Salt 2014.1.4 <http://docs.saltstack.com/en/latest/topics/releases/2014.1.4.html>`_
 
 配置文件中的Pillar
 *********************
