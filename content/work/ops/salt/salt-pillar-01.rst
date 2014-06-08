@@ -6,7 +6,7 @@ Salt中Pillar那点事
 :category: SaltStack
 :slug: salt-pillar-01
 :author: pengyao
-:summary: 在 `SaltStack`_ 中, Pillar作为定义minion全局数据的接口. 哪么在Salt内部, Pillar是如何工作的? 在哪些情况下, 使用Pillar需要先执行刷新操作? 而哪些又不需要?
+:summary: 在 `SaltStack`_ 中, Pillar作为定义minion全局数据的接口. 那么在Salt内部, Pillar是如何工作的? 在哪些情况下, 使用Pillar需要先执行刷新操作? 而哪些又不需要?
 
 基本简介
 ****************
