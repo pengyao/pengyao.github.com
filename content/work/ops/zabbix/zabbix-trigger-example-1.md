@@ -86,7 +86,7 @@ system.uptime映入眼帘，这个item是采集主机运行时间的,一直累�
 
 然后整合下表达式，就成了下边这个样子:
 
-    ({TRIGGER.VALUE}=0&{test-01:system.cpu.util[,idle].max(3m)}<20) | ({TRIGGER.VALUE}=1&{test-01:system.cpu.util[,idle].min(3m)<50})
+    ({TRIGGER.VALUE}=0&{test-01:system.cpu.util[,idle].max(3m)}<20) | ({TRIGGER.VALUE}=1&{test-01:system.cpu.util[,idle].min(3m)}<50)
 
 
 不错，不错，看起来多高端，颇有成就感!
