@@ -208,7 +208,7 @@ Salt Master与Salt Minion建立了对应的ZeroMQ pattern, 那么当一个远程
         ret, out = self._format_ret(full_ret)
         self._output_ret(ret, out)
 
-2. 在 `LocalClient <https://github.com/saltstack/salt/blob/v2014.1.10/salt/client/__init__.py#L77>`_ 对象初始化时, 会创建用于对发送的数据进行序列化的 `Serial <https://github.com/saltstack/salt/blob/v2014.1.10/salt/client/__init__.py#L77>`_ 对象, 及`MasterEvent <https://github.com/saltstack/salt/blob/v2014.1.10/salt/utils/event.py#L406>`_ 对象. MasterEvent对象会创建如下ZeroMQ pattern:
+2. 在 `LocalClient <https://github.com/saltstack/salt/blob/v2014.1.10/salt/client/__init__.py#L77>`_ 对象初始化时, 会创建用于对发送的数据进行序列化的 `Serial <https://github.com/saltstack/salt/blob/v2014.1.10/salt/client/__init__.py#L77>`_ 对象, 及 `MasterEvent <https://github.com/saltstack/salt/blob/v2014.1.10/salt/utils/event.py#L406>`_ 对象. MasterEvent对象会创建如下ZeroMQ pattern:
 
  * *sub*:
  
