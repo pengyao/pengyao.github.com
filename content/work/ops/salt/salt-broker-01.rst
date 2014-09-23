@@ -139,7 +139,7 @@ syndic本地会维护auth及文件服务系统, 而broker会将所有请求转�
     service salt-syndic stop
     service salt-master stop
     chkconfig salt-syndic off
-    service salt-master off
+    chkconfig salt-master off
 
 2. 安装salt-broker
 
