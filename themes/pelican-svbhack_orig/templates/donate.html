@@ -1,0 +1,10 @@
+{% if DONATE %}
+<hr>
+<div class="highlight" id='donate'>
+<pre>
+{% if RIPPLE_ADDRESS %}
+如果你觉得本篇文章对你有用，可以捐赠一点<a href="https://ripple.com/">XRP</a>给我，账号是: {{ RIPPLE_ADDRESS }}
+{% endif %}
+</pre>
+</div>
+{% endif %}
