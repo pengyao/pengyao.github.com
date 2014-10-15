@@ -14,13 +14,15 @@ DEFAULT_DATE = (2013,01,01,01,01,01)
 
 FILES_TO_COPY = (('extra/favicon.ico', 'favicon.ico'),
                  ('extra/CNAME', 'CNAME'),
-                 ('extra/README', 'README'),)
+                 ('extra/README', 'README'),
+                 ('extra/images/user_logo.jpg', 'user_logo.jpg'),)
 
 MD_EXTENSIONS = ['codehilite', 'extra', 'toc', 'tables']
 OUTPUT_PATH = 'output/'
 STATIC_PATHS = ['images', 'extra']
 
-THEME = 'themes/tuxlite_tbs'
+THEME = 'themes/pelican-svbhack'
+USER_LOGO_URL = SITEURL + '/user_logo.jpg'
 
 # Blogroll
 LINKS =  ((u'中国SaltStack用户组', 'http://saltstack.cn/'),
