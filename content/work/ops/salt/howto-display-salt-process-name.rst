@@ -19,7 +19,7 @@
 测试
 ******************
 
-安装setproctitle
+安装setproctitle(Master/Minion端均进行)
 
 .. code-block:: bash
 
