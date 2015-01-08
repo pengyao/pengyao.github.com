@@ -13,7 +13,7 @@
 环境说明
 **************
 * 操作系统环境: CentOS 6.5，已配置EPEL源
-* Salt Master/Minion版本: 2017.7.0
+* Salt Master/Minion版本: 2014.7.0
 
 
 测试
