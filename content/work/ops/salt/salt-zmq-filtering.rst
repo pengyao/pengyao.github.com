@@ -143,7 +143,7 @@ tcpdump抓包结果如下::
         if not broadcast:
             sub_list = sub_ids(subs=subs)
 
-        # sleep 30 seconds, guarantee all subscribes have beend subscribe
+        # sleep 30 seconds, guarantee all subscribes have  subscribed
         time.sleep(30)
 
         print "regain consciousness"
@@ -233,8 +233,8 @@ tcpdump抓包结果如下::
 
 .. code-block:: bash
 
-    python publisher.py    # 在Publisher(Master)端进行
-    python subscriber.py   # 在Subcriber(Minion-01)端进行
+    python publisher.py unicast   # 在Publisher(Master)端进行
+    python subscriber.py unicast   # 在Subcriber(Minion-01)端进行
 
 执行时间为 6786ms
 
