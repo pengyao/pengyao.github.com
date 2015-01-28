@@ -10,7 +10,7 @@ Salt zmq_filtering测试
 
 Salt 2014.7新增 `zmq_filtering`_ 配置项, 基于zeromq PUB-SUB `Envelopes`_ 技术,
 在Master端(publisher)进行message过滤(ZeroMQ 3.0+版本,之前版本是在subscriber端进行过滤), 以实现如果该指令只是少量主机执行的话,
-只将指令发送到匹配的Minion端, 而并非发送到所有的Minion端. 需要注意的是, 目前zmq_filtering只作用list taerget, 即使用-L来指定target.
+只将指令发送到匹配的Minion端, 而并非发送到所有的Minion端. 需要注意的是, 目前zmq_filtering只作用list target, 即使用-L来指定target.
 本文将对其进行功能及效果测试.
 
 前置阅读
