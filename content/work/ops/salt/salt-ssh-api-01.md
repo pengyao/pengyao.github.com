@@ -6,7 +6,7 @@ Slug: salt-ssh-api-01
 Author: pengyao
 Summary: Salt 2015.5版本增加了SSH Python API及REST API的支持, 对其做下功能测试
 
-Salt 2015.5版本增加了SSH Python API及REST API的支持, 那么该怎么使用? 其推荐本文就对其进行功能测试.
+Salt 2015.5版本增加了SSH Python API及REST API的支持, 那么该怎么使用? 是否可以直接在生产环境中使用? 本文将对其进行测试.
 
 ## 前置阅读
 
