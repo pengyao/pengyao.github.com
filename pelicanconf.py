@@ -12,10 +12,12 @@ DEFAULT_LANG = u'zh'
 DEFAULT_DATE_FORMAT = '%Y-%m-%d'
 DEFAULT_DATE = (2013,01,01,01,01,01)
 
-FILES_TO_COPY = (('extra/favicon.ico', 'favicon.ico'),
-                 ('extra/CNAME', 'CNAME'),
-                 ('extra/README', 'README'),
-                 ('extra/images/user_logo.jpg', 'user_logo.jpg'),)
+EXTRA_PATH_METADATA = {
+  'extra/favicon.ico': {'path': 'favicon.ico'},
+  'extra/CNAME': {'path': 'CNAME'},
+  'extra/README': {'path': 'README'},
+  'extra/images/user_logo.jpg': {'path': 'README'},
+}
 
 MD_EXTENSIONS = ['codehilite', 'extra', 'toc', 'tables']
 OUTPUT_PATH = 'output/'
