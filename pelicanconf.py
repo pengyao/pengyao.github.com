@@ -16,7 +16,7 @@ EXTRA_PATH_METADATA = {
   'extra/favicon.ico': {'path': 'favicon.ico'},
   'extra/CNAME': {'path': 'CNAME'},
   'extra/README': {'path': 'README'},
-  'extra/images/user_logo.jpg': {'path': 'README'},
+  'extra/images/user_logo.jpg': {'path': 'user_logo.jpg'},
 }
 
 MD_EXTENSIONS = ['codehilite', 'extra', 'toc', 'tables']
