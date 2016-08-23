@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="http://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="http://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="Salt, saltstack, gitfs, reactor, webhook, rest_api">
+
+  <title>
+    PengYao's Weblog
+&ndash; Salt自动化之自动更新Gitfs  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="http://pengyao.org">
+        <img src="http://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="http://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="http://pengyao.org">Index</a> &brvbar; <a href="http://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="http://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/salt-auto-gitfs-update.html">Salt自动化之自动更新Gitfs</a></h3>
+  </div>
+  <div class="article_text">
+    <p>Salt支持<a href="http://docs.saltstack.com/en/latest/topics/tutorials/gitfs.html">Gitfs</a>, 可以将State Tree放入Git远程仓库中, 进行版本控制, 易于管理. 当提交更新至远程Git仓库后, 需要手动在Master执行如下操作:</p>
+<div class="codehilite"><pre><span></span>salt-run fileserver.update
+</pre></div>
+
+
+<p>或者等待一段时间,由Master的maintenance进程进行更新(默认更新间隔为60s, 可以通过master配置文件 <em>loop_interval</em> 选项进行调整). 那么有没有一种方案, 能够实现Push代码至Git仓库后, 自动触发Gitfs的更新哪? </p>
+<p>常见的Git仓库管理系统, 如Gitlab, Github, Bitbucket都支持Webhook功能, 即当Push代码至仓库时, 能够自动触发外部Webhook调用, 而Salt API提供Webhook功能, 可以通过Webhook触发Event, Reactor系统又能基于Event进行Salt自动化管理, 看看可以就此入手, 实现Gitfs自动更新方案.</p>
+<h2 id="_1">前置阅读</h2>
+<ul>
+<li><a href="http://docs.saltstack.com/en/latest/topics/tutorials/gitfs.html">Salt Gitfs教程</a></li>
+<li><a href="http://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.htm">Salt REST_CHERRYPY教程</a></li>
+<li><a href="http://docs.saltstack.com/en/latest/topics/reactor/">Salt Reactor教程</a></li>
+</ul>
+<h2 id="_2">环境说明</h2>
+<ul>
+<li>CentOS 6.5 With EPEL</li>
+<li>salt-master及salt-api版本2015.5.0</li>
+<li>Master端已安装python-pygit2</li>
+<li>Master端已安装Nginx(用于salt-api安全防护)</li>
+<li>本次采用Github作为远程仓库Demo</li>
+<li>本次采用临时域名<em>salt-api-demo.pengyao.org</em>进行测试, 请根据自己真实环境进行调整</li>
+</ul>
+<h2 id="_3">开工</h2>
+<ul>
+<li>以下操作, 如非说明, 均在Master端进行</li>
+</ul>
+<h3 id="salt-api">配置Salt API</h3>
+<p><em>/etc/salt/master.d/api.conf</em></p>
+<div class="codehilite"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">rest_cherrypy</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">port</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">8000</span>
+  <span class="l l-Scalar l-Scalar-Plain">host</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">127.0.0.1</span>
+  <span class="l l-Scalar l-Scalar-Plain">debug</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="l l-Scalar l-Scalar-Plain">disable_ssl</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+  <span class="l l-Scalar l-Scalar-Plain">webhook_url</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">/hook</span>
+  <span class="l l-Scalar l-Scalar-Plain">webhook_disable_auth</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+</pre></div>
+
+
+<p>由于第三方Webhook部分并不支持认证功能, 所以关闭了webhook认证(<em>webhook_disable_auth</em>参数)</p>
+<p>重启Salt API服务, 以使配置生效</p>
+<div class="codehilite"><pre><span></span>service salt-api restart
+</pre></div>
+
+
+<p>由于关闭了Webhook认证, 意味着公网所有人都可以触发本Webhook, 所以Master端安装了Nginx对Webhook接口增加Basic Auth认证功能</p>
+<p><em>/etc/nginx/conf.d/salt-api-demo.pengyao.org.conf</em></p>
+<div class="codehilite"><pre><span></span><span class="nt">upstream</span> <span class="nt">salt-api-demo</span> <span class="p">{</span>
+  <span class="n">server</span> <span class="m">127</span><span class="o">.</span><span class="m">0</span><span class="o">.</span><span class="m">0</span><span class="o">.</span><span class="m">1</span><span class="o">:</span><span class="m">8000</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nt">server</span> <span class="p">{</span>
+  <span class="n">listen</span> <span class="m">80</span><span class="p">;</span>
+  <span class="n">server_name</span> <span class="n">salt</span><span class="o">-</span><span class="n">api</span><span class="o">-</span><span class="n">demo</span><span class="o">.</span><span class="n">pengyao</span><span class="o">.</span><span class="n">org</span><span class="p">;</span>
+
+  <span class="n">location</span> <span class="o">/</span> <span class="err">{</span>
+    <span class="n">proxy_pass</span>  <span class="n">http</span><span class="o">://</span><span class="n">salt</span><span class="o">-</span><span class="n">api</span><span class="o">-</span><span class="n">demo</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="nt">location</span> <span class="o">/</span><span class="nt">hook</span> <span class="p">{</span>
+    <span class="n">proxy_pass</span>  <span class="n">http</span><span class="o">://</span><span class="n">salt</span><span class="o">-</span><span class="n">api</span><span class="o">-</span><span class="n">demo</span><span class="p">;</span>
+    <span class="n">auth_basic</span>  <span class="s2">&quot;salt api demo&quot;</span><span class="p">;</span>
+    <span class="n">auth_basic_user_file</span>  <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">htpasswd</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="err">}</span>
+</pre></div>
+
+
+<p>重启Nginx服务, 以使配置生效</p>
+<div class="codehilite"><pre><span></span>service nginx restart
+</pre></div>
+
+
+<p>创建Basic Auth用户文件:</p>
+<div class="codehilite"><pre><span></span><span class="nb">echo</span> <span class="s2">&quot;demo:</span><span class="k">$(</span><span class="nb">echo</span> -n demo_pass <span class="p">|</span>openssl passwd -stdin<span class="k">)</span><span class="s2">&quot;</span>  &gt; /opt/htpasswd
+</pre></div>
+
+
+<p>Master下载eventlisten.py, 监听Event</p>
+<div class="codehilite"><pre><span></span>wget https://raw.githubusercontent.com/saltstack/salt/develop/tests/eventlisten.py
+python eventlisten.py
+</pre></div>
+
+
+<p>开启新窗口, 手动触发webhook, 进行测试</p>
+<div class="codehilite"><pre><span></span>curl http://demo:demo_pass@salt-api-demo.pengyao.org/hook/test -XPOST -d &quot;demo=True&quot;
+</pre></div>
+
+
+<p>运行eventlisten.py的控制台有如下输出:</p>
+<div class="codehilite"><pre><span></span>Event fired at Tue May 26 00:33:04 2015
+*************************
+Tag: salt/netapi/hook/test
+Data:
+{&#39;_stamp&#39;: &#39;2015-05-25T16:33:04.425532&#39;,
+ &#39;body&#39;: &#39;&#39;,
+ &#39;headers&#39;: {&#39;Accept&#39;: &#39;*/*&#39;,
+             &#39;Authorization&#39;: &#39;Basic ZGVtbzpkZW1vX3Bhc3M=&#39;,
+             &#39;Connection&#39;: &#39;close&#39;,
+             &#39;Content-Length&#39;: &#39;9&#39;,
+             &#39;Content-Type&#39;: &#39;application/x-www-form-urlencoded&#39;,
+             &#39;Host&#39;: &#39;salt-api-demo&#39;,
+             &#39;Remote-Addr&#39;: &#39;127.0.0.1&#39;,
+             &#39;User-Agent&#39;: &#39;curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2&#39;},
+ &#39;post&#39;: {&#39;demo&#39;: &#39;True&#39;}}
+</pre></div>
+
+
+<p>webhook测试达到预期</p>
+<h3 id="_4">建立远程仓库</h3>
+<p>登陆<a href="https://github.com/pengyao/">Github</a>建立远程仓库, 本次Demo仓库地址: https://github.com/pengyao/salt-gitfs-demo.git</p>
+<h3 id="gitfs">配置Gitfs</h3>
+<p><em>/etc/salt/master.d/gitfs.conf</em></p>
+<div class="codehilite"><pre><span></span><span class="c1"># Gitfs backend</span>
+<span class="l l-Scalar l-Scalar-Plain">fileserver_backend</span><span class="p p-Indicator">:</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">git</span>
+
+<span class="c1"># Gitfs provider</span>
+<span class="l l-Scalar l-Scalar-Plain">gitfs_provider</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">pygit2</span>
+
+<span class="c1"># Gitfs repositories</span>
+<span class="l l-Scalar l-Scalar-Plain">gitfs_remotes</span><span class="p p-Indicator">:</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">https://github.com/pengyao/salt-gitfs-demo.git</span>
+</pre></div>
+
+
+<p>重启Salt Master服务, 以使配置生效</p>
+<div class="codehilite"><pre><span></span>service salt-master restart
+</pre></div>
+
+
+<p>重启完毕后, 获取gitfs中的文件列表(启动时, 会自动触发拉取最新的远程仓库代码)</p>
+<div class="codehilite"><pre><span></span>salt-run fileserver.file_list
+</pre></div>
+
+
+<p>输出如下:</p>
+<div class="codehilite"><pre><span></span><span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">README</span>
+</pre></div>
+
+
+<h3 id="reactor">配置Reactor</h3>
+<p><em>/etc/salt/master.d/reactor.conf</em></p>
+<div class="codehilite"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">reactor</span><span class="p p-Indicator">:</span>
+  <span class="p p-Indicator">-</span> <span class="s">&#39;salt/netapi/hook/gitfs/*&#39;</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">/srv/reactor/gitfs.sls</span>
+</pre></div>
+
+
+<p><em>/srv/reactor/gitfs.sls</em></p>
+<div class="codehilite"><pre><span></span><span class="cp">{%</span> <span class="k">if</span> <span class="s1">&#39;gitfs/update&#39;</span> <span class="k">in</span> <span class="nv">tag</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">gitfs_update:</span>
+<span class="x">  runner.fileserver.update</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+</pre></div>
+
+
+<p>重启Salt Master服务, 以使配置生效</p>
+<div class="codehilite"><pre><span></span>service salt-master restart
+</pre></div>
+
+
+<p>重启完毕后, 测试webhook:</p>
+<div class="codehilite"><pre><span></span>curl http://demo:demo_pass@salt-api-demo.pengyao.org/hook/gitfs/update -XPOST -d <span class="s2">&quot;demo=True&quot;</span>
+</pre></div>
+
+
+<p>运行eventlisten.py的窗口, 有如下输出:</p>
+<div class="codehilite"><pre><span></span>Event fired at Tue May 26 00:49:11 2015
+*************************
+Tag: salt/netapi/hook/gitfs/update
+Data:
+{&#39;_stamp&#39;: &#39;2015-05-25T16:49:11.694576&#39;,
+ &#39;body&#39;: &#39;&#39;,
+ &#39;headers&#39;: {&#39;Accept&#39;: &#39;*/*&#39;,
+             &#39;Authorization&#39;: &#39;Basic ZGVtbzpkZW1vX3Bhc3M=&#39;,
+             &#39;Connection&#39;: &#39;close&#39;,
+             &#39;Content-Length&#39;: &#39;9&#39;,
+             &#39;Content-Type&#39;: &#39;application/x-www-form-urlencoded&#39;,
+             &#39;Host&#39;: &#39;salt-api-demo&#39;,
+             &#39;Remote-Addr&#39;: &#39;127.0.0.1&#39;,
+             &#39;User-Agent&#39;: &#39;curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.0.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2&#39;},
+ &#39;post&#39;: {&#39;demo&#39;: &#39;True&#39;}}
+Event fired at Tue May 26 00:49:11 2015
+*************************
+Tag: salt/event/new_client
+Data:
+{&#39;_stamp&#39;: &#39;2015-05-25T16:49:11.737823&#39;}
+Event fired at Tue May 26 00:49:11 2015
+*************************
+Tag: salt/run/20150526004911736899/new
+Data:
+{&#39;_stamp&#39;: &#39;2015-05-25T16:49:11.742807&#39;,
+ &#39;fun&#39;: &#39;runner.fileserver.update&#39;,
+ &#39;jid&#39;: &#39;20150526004911736899&#39;,
+ &#39;user&#39;: &#39;Reactor&#39;}
+Event fired at Tue May 26 00:49:14 2015
+*************************
+Tag: salt/run/20150526004911736899/ret
+Data:
+{&#39;_stamp&#39;: &#39;2015-05-25T16:49:14.168910&#39;,
+ &#39;fun&#39;: &#39;runner.fileserver.update&#39;,
+ &#39;jid&#39;: &#39;20150526004911736899&#39;,
+ &#39;return&#39;: True,
+ &#39;success&#39;: True,
+ &#39;user&#39;: &#39;Reactor&#39;}
+</pre></div>
+
+
+<p>可以看到, 本次测试, 产生了4条event:</p>
+<ol>
+<li>webhook产生, 对应Tag为: salt/netapi/hook/gitfs/update</li>
+<li>由于配置的有对应的Reactor, 所以会自动创建Reactor线程, 产生第二条Event</li>
+<li>产生的Reactor线程在获取对应的sls发现需要运行<em>runner.fileserver.update</em>任务, 所以自动创建该任务, 对应的Tag为: salt/run/$jid/new</li>
+<li>runner任务结果返回, 对应的Tag为: salt/run/$jid/ret</li>
+</ol>
+<p>测试达到预期</p>
+<h3 id="github-webhook">配置GitHub Webhook</h3>
+<p>进入<a href="https://github.com/pengyao/salt-gitfs-demo/settings">项目配置页面</a>, 选择"Webhooks &amp; Services"左侧导航条, 选择 "Add Webhook", 分别输入如下内容:</p>
+<ul>
+<li>Payload URL: http://demo:demo_pass@salt-api-demo.pengyao.org/hook/gitfs/update</li>
+</ul>
+<p>输入完毕后, 选择 <em>Add Webhook</em>进行保存</p>
+<h3 id="gitfs_1">自动更新Gitfs测试</h3>
+<p>本地clone本项目, 进行如下操作:</p>
+<div class="codehilite"><pre><span></span>git clone git@github.com:pengyao/salt-gitfs-demo.git
+<span class="nb">cd</span> salt-gitfs-demo
+<span class="nb">echo</span> <span class="s2">&quot;I am a test&quot;</span> &gt; <span class="nb">test</span>
+git add -A
+git commit -m <span class="s2">&quot;add test&quot;</span>
+git push -u origin master
+</pre></div>
+
+
+<p>git push后, 在运行eventlisten.py窗口, 有如下输出:</p>
+<div class="codehilite"><pre><span></span>Event fired at Tue May 26 01:04:15 2015
+*************************
+Tag: salt/netapi/hook/gitfs/update
+Data:
+{&#39;_stamp&#39;: &#39;2015-05-25T17:04:15.495458&#39;,
+ &#39;body&#39;: &#39;{&quot;ref&quot;:&quot;refs/heads/master&quot;,&quot;before&quot;:&quot;efe61d0816e4f34c7c0117945ef2383a4183ac26&quot;,&quot;after&quot;:&quot;e2264a6386bf5c6b8ec6daee0ddca3155b4e3ccc&quot;,&quot;created&quot;:false,&quot;deleted&quot;:false,&quot;forced&quot;:false,&quot;base_ref&quot;:null,&quot;compare&quot;:&quot;https://github.com/pengyao/salt-gitfs-demo/compare/efe61d0816e4...e2264a6386bf&quot;,&quot;commits&quot;
+ ......此处省略若干字......
+ Event fired at Tue May 26 01:04:15 2015
+*************************
+Tag: salt/event/new_client
+Data:
+{&#39;_stamp&#39;: &#39;2015-05-25T17:04:15.523955&#39;}
+Event fired at Tue May 26 01:04:15 2015
+*************************
+Tag: salt/run/20150526010415522645/new
+Data:
+{&#39;_stamp&#39;: &#39;2015-05-25T17:04:15.529005&#39;,
+ &#39;fun&#39;: &#39;runner.fileserver.update&#39;,
+ &#39;jid&#39;: &#39;20150526010415522645&#39;,
+ &#39;user&#39;: &#39;Reactor&#39;}
+Event fired at Tue May 26 01:04:19 2015
+*************************
+Tag: salt/run/20150526010415522645/ret
+Data:
+{&#39;_stamp&#39;: &#39;2015-05-25T17:04:19.393239&#39;,
+ &#39;fun&#39;: &#39;runner.fileserver.update&#39;,
+ &#39;jid&#39;: &#39;20150526010415522645&#39;,
+ &#39;return&#39;: True,
+ &#39;success&#39;: True,
+ &#39;user&#39;: &#39;Reactor&#39;}
+</pre></div>
+
+
+<p>检查gitfs仓库文件列表:</p>
+<div class="codehilite"><pre><span></span>salt-run fileserver.file_list
+</pre></div>
+
+
+<p>输出如下:</p>
+<div class="codehilite"><pre><span></span>- README
+- test
+</pre></div>
+
+
+<p>达到预期</p>
+<h2 id="_5">结束语</h2>
+<p>Reactor系统的加入, Salt插上智能化的翅膀, 轻松甩开竞争对手几条街. 简单易用的Salt REST API接口, 更易于和第三方系统整合, 使Salt轻松成为运维系统自动化引擎. </p>
+<p>人生苦短, 我用Salt!</p>
+<p>欢迎加入<a href="http://www.saltstack.cn/">中国SaltStack用户组</a></p>
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2015-05-26</p>
+    <p>Category: <a href="http://pengyao.org/category/saltstack.html">SaltStack</a>
+ &ndash; Tags:
+      <a href="http://pengyao.org/tag/salt.html">Salt</a>,      <a href="http://pengyao.org/tag/saltstack.html">saltstack</a>,      <a href="http://pengyao.org/tag/gitfs.html">gitfs</a>,      <a href="http://pengyao.org/tag/reactor.html">reactor</a>,      <a href="http://pengyao.org/tag/webhook.html">webhook</a>,      <a href="http://pengyao.org/tag/rest_api.html">rest_api</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "salt-auto-gitfs-update.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="http://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="http://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="zabbix, trigger, 触发器, 函数">
+
+  <title>
+    PengYao's Weblog
+&ndash; 【翻译】Zabbix触发器支持的函数说明  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="http://pengyao.org">
+        <img src="http://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="http://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="http://pengyao.org">Index</a> &brvbar; <a href="http://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="http://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/zabbix-triggers-functions.html">【翻译】Zabbix触发器支持的函数说明</a></h3>
+  </div>
+  <div class="article_text">
+    <ul>
+<li>原文出处: <a href="https://www.zabbix.com/documentation/2.0/manual/appendix/triggers/functions">https://www.zabbix.com/documentation/2.0/manual/appendix/triggers/functions</a></li>
+<li>译者: pengyao</li>
+</ul>
+<h2 id="abschange">abschange</h2>
+<ul>
+<li><strong>参数</strong>: 直接忽略后边的参数</li>
+<li><strong>支持值类型</strong>: float, int, str, text, log</li>
+<li><strong>描述</strong>: 返回最近获取到的值与之前的值的差值的绝对值. 对于字符串类型，0表示值相等，1表示值不同</li>
+</ul>
+<h2 id="avg">avg</h2>
+<ul>
+<li><strong>参数</strong>: 秒或#num</li>
+<li><strong>支持值类型</strong>: float, int</li>
+<li><strong>描述</strong>: 返回指定时间间隔的平均值. 时间间隔可以通过第一个参数通过秒数设置或收集的值的数目(需要前边加上#,比如#5表示最近5次的值) 。如果有第二个，则表示时间漂移(time shift),例如像查询一天之前的一小时的平均值，对应的函数是 avg(3600,86400), 时间漂移是Zabbix 1.8.2加入进来的 </li>
+</ul>
+<h2 id="change">change</h2>
+<ul>
+<li><strong>参数</strong>: 直接忽略掉后边的参数</li>
+<li><strong>支持值类型</strong>: float, int, str, text, log</li>
+<li><strong>描述</strong>: 返回最近获取到的值与之前的值的差值. 对于字符串类型，0表示值相等，1表示值不同</li>
+</ul>
+<h2 id="count">count</h2>
+<ul>
+<li><strong>参数</strong>: 秒或#num </li>
+<li><strong>支持值类型</strong>: float, int, str, text, log</li>
+<li><strong>描述</strong>: 返回指定时间间隔内的数值统计。 时间间隔可以通过第一个参数通过秒数设置或收集的值数目（需要值前边加上#）。本函数可以支持第二个参数作为样本(pattern)数据，第三个参数作为操作(operator)参数，第四个参数作为时间漂移(time shift)参数. 对于样本，整数(iteeger)监控项实用精确匹配，浮点型(float)监控项允许偏差0.0000001</li>
+</ul>
+<p>支持的操作(operators)类型:</p>
+<div class="codehilite"><pre><span></span>  eq: 相等
+  ne: 不相等 
+  gt: 大于
+  ge: 大于等于
+  lt: 小于
+  le: 小于等于
+  like: 内容匹配
+</pre></div>
+
+
+<p>对于整数和浮点型监控项目支持eq(默认), ne, gt, ge, lt, le；对于string、text、log监控项支持like(默认), eq, ne</p>
+<p>例子:</p>
+<div class="codehilite"><pre><span></span>  count(600): 最近10分钟的值的个数
+  count(600,12): 最近10分钟，值等于12的个数
+  count(600,12,&quot;gt&quot;): 最近10分钟，值大于12的个数
+  count(#10,12,&quot;gt&quot;): 最近的10个值中，值大于12的个数
+  count(600,12,&quot;gt&quot;,86400): 24小时之前的前10分钟数据中，值大于12的个数
+  count(600,,,86400): 24小时之前的前10分钟数据的值的个数
+</pre></div>
+
+
+<p>#num参数从Zabbix 1.6.1起开始支持, time shift参数和字符串操作支持从Zabbix 1.8.2开始支持</p>
+<h2 id="date">date</h2>
+<ul>
+<li><strong>参数</strong>: 直接忽略掉后边的参数</li>
+<li><strong>支持值类型</strong>: 所有(any)</li>
+<li><strong>描述</strong>: 返回当前日期(格式为YYYYMMDD), 例如20031025</li>
+</ul>
+<h2 id="dayofmonth">dayofmonth</h2>
+<ul>
+<li><strong>参数</strong>: 直接忽略掉后边的参数</li>
+<li><strong>支持值类型</strong>: 所有(any)</li>
+<li><strong>描述</strong>: 返回当前是本月第几天(数值范围:1-31)，该函数从Zabbix 1.8.5起开始支持</li>
+</ul>
+<h2 id="dayofweek">dayofweek</h2>
+<ul>
+<li><strong>参数</strong>: 直接忽略掉后边的参数</li>
+<li><strong>支持值类型</strong>: 所有(any)</li>
+<li><strong>描述</strong>: 返回当前是本周的第几天(数值返回:1-7)，星期一是 1，星期天是7</li>
+</ul>
+<h2 id="delta">delta</h2>
+<ul>
+<li><strong>参数</strong>: 秒或#num</li>
+<li><strong>支持值类型</strong>: float, int</li>
+<li><strong>描述</strong>: 返回指定时间间隔内的最大值与最小值的差值(max()-min())。时间间隔作为第一个参数可以是秒或者收集值的数目. 从Zabbix 1.8.2开始，支持可选的第二个参数 time_shift.</li>
+</ul>
+<h2 id="diff">diff</h2>
+<ul>
+<li><strong>参数</strong>: 忽略</li>
+<li><strong>支持值类型</strong>: float, int, str, text, log</li>
+<li><strong>描述</strong>: 返回值为1 表示最近的值与之前的值不同，0为其他情况</li>
+</ul>
+<h2 id="fuzzytime">fuzzytime</h2>
+<ul>
+<li><strong>参数</strong>: 秒</li>
+<li><strong>支持值类型</strong>: float, int</li>
+<li><strong>描述</strong>: 返回值为1表示监控项值的时间戳与Zabbix Server的时间多N秒, 0为其他. 常使用system.localtime来检查本地时间是否与Zabbix server时间相同.</li>
+</ul>
+<h2 id="iregexp">iregexp</h2>
+<ul>
+<li><strong>参数</strong>: 第一个为字符串，第二个为秒或#num</li>
+<li><strong>支持值类型</strong>: str, log, text </li>
+<li><strong>描述</strong>: 与<strong>regexp</strong>类似，区别是不区分大小写</li>
+</ul>
+<h2 id="last">last</h2>
+<ul>
+<li><strong>参数</strong>: 秒或#num</li>
+<li><strong>支持值类型</strong>: float, int, str, text, log</li>
+<li><strong>描述</strong>: 最近的值，如果为秒，则忽略，#num表示最近第N个值，请注意当前的#num和其他一些函数的#num的意思是不同的    </li>
+</ul>
+<p>例子:</p>
+<div class="codehilite"><pre><span></span>last(0) 等价于 last(#1)
+last(#3) 表示最近**第**3个值(并不是最近的三个值)
+本函数也支持第二个参数**time_shift**，例如
+last(0,86400) 返回一天前的最近的值
+如果在history中同一秒中有多个值存在，Zabbix不保证值的精确顺序
+#num从Zabbix 1.6.2起开始支持, timeshift从1.8.2其开始支持,可以查询 avg()函数获取它的使用方法
+</pre></div>
+
+
+<h2 id="logeventid">logeventid</h2>
+<ul>
+<li><strong>参数</strong>: string</li>
+<li><strong>支持值类型</strong>: log</li>
+<li><strong>描述</strong>: 检查最近的日志条目的Event ID是否匹配正则表达式. 参数为正则表达式,POSIX扩展样式. 当返回值为0时表示不匹配，1表示匹配。 该函数从Zabbix 1.8.5起开始支持.</li>
+</ul>
+<h2 id="logseverity">logseverity</h2>
+<ul>
+<li><strong>参数</strong>: 忽略 </li>
+<li><strong>支持值类型</strong>: log</li>
+<li><strong>描述</strong>: 返回最近日志条目的日志等级(log severity). 当返回值为0时表示默认等级，N为具体对应等级(整数，常用于Windows event logs). Zabbix日志等级来源于Windows event log的Information列.</li>
+</ul>
+<h2 id="logsource">logsource</h2>
+<ul>
+<li><strong>参数</strong>: string</li>
+<li><strong>支持值类型</strong>: log</li>
+<li><strong>描述</strong>: 检查最近的日志条目是否匹配参数的日志来源. 当返回值为0时表示不匹配，1表示匹配。通场用于Windows event logs监控. 例如 logsource["VMWare Server"]    </li>
+</ul>
+<h2 id="max">max</h2>
+<ul>
+<li><strong>参数</strong>: 秒或#num</li>
+<li><strong>支持值类型</strong>: float, int</li>
+<li><strong>描述</strong>: 返回指定时间间隔的最大值. 时间间隔作为第一个参数可以是秒或收集值的数目(前缀为#). 从Zabbix 1.8.2开始，函数支持第二个可选参数 time_shift，可以查看avg()函数获取它的使用方法.</li>
+</ul>
+<h2 id="min">min</h2>
+<ul>
+<li><strong>参数</strong>: 秒或#num</li>
+<li><strong>支持值类型</strong>: float, int</li>
+<li><strong>描述</strong>: 返回指定时间间隔的最小值. 时间间隔作为第一个参数可以是秒或收集值的数目(前缀为#). 从Zabbix 1.8.2开始，函数支持第二个可选参数 time_shift，可以查看avg()函数获取它的使用方法.</li>
+</ul>
+<h2 id="nodata">nodata</h2>
+<ul>
+<li><strong>参数</strong>: 秒</li>
+<li><strong>支持值类型</strong>: any</li>
+<li><strong>描述</strong>: 当返回值为1表示指定的间隔(间隔不应小于30秒)没有接收到数据, 0表示其他.</li>
+</ul>
+<h2 id="now">now</h2>
+<ul>
+<li><strong>参数</strong>: 忽略</li>
+<li><strong>支持值类型</strong>: any</li>
+<li><strong>描述</strong>: 返回距离Epoch(1970年1月1日 00:00:00 UTC)时间的秒数</li>
+</ul>
+<h2 id="prev">prev</h2>
+<ul>
+<li><strong>参数</strong>: 忽略</li>
+<li><strong>支持值类型</strong>: float, int, str, text, log</li>
+<li><strong>描述</strong>:返回之前的值，类似于 last(#2)</li>
+</ul>
+<h2 id="regexp">regexp</h2>
+<ul>
+<li><strong>参数</strong>: 第一个参数为string, 第二个参数为秒或#num</li>
+<li><strong>支持值类型</strong>: str, log, text</li>
+<li><strong>描述</strong>: 检查最近的值是否匹配正则表达式，参数的正则表达式为POSIX扩展样式, 第二个参数为秒数或收集值的数目，将会处理多个值. 本函数区分大小写。当返回值为1时表示找到，0为其他.</li>
+</ul>
+<h2 id="str">str</h2>
+<ul>
+<li><strong>参数</strong>: 第一个参数为string, 第二个参数为秒或#num</li>
+<li><strong>支持值类型</strong>: str, log, text</li>
+<li><strong>描述</strong>: 查找最近值中的字符串。第一个参数指定查找的字符串，大小写敏感。第二个可选的参数指定秒数或收集值的数目，将会处理多个值。 当返回值为1时表示找到，0为其他.</li>
+</ul>
+<h2 id="strlen">strlen</h2>
+<ul>
+<li><strong>参数</strong>: 秒或#num</li>
+<li><strong>支持值类型</strong>: str, log, text</li>
+<li><strong>描述</strong>: 指定最近值的字符串长度(并非字节), 参数值类似于last函数. 例如strlen(0)等价于strlen(#1),strlen(#3)表示最近的第三个值, strlen(0,86400)表示一天前的最近的值. 该函数从Zabbix 1.8.4起开始支持</li>
+</ul>
+<h2 id="sum">sum</h2>
+<ul>
+<li><strong>参数</strong>: 秒或#num</li>
+<li><strong>支持值类型</strong>: float, int</li>
+<li><strong>描述</strong>: 返回指定时间间隔中收集到的值的总和. 时间间隔作为第一个参数支持秒或收集值的数目(以#开始). 从Zabbix 1.8.2开始，本函数支持time_shift作为第二个参数。 可以查看avg函数获取它的用法</li>
+</ul>
+<h2 id="time">time</h2>
+<ul>
+<li><strong>参数</strong>: 忽略</li>
+<li><strong>支持值类型</strong>: any</li>
+<li><strong>描述</strong>: 返回当前时间，格式为HHMMSS，例如123055  </li>
+</ul>
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-05-06</p>
+    <p>Category: <a href="http://pengyao.org/category/zabbix.html">Zabbix</a>
+ &ndash; Tags:
+      <a href="http://pengyao.org/tag/zabbix.html">zabbix</a>,      <a href="http://pengyao.org/tag/trigger.html">trigger</a>,      <a href="http://pengyao.org/tag/hong-fa-qi.html">触发器</a>,      <a href="http://pengyao.org/tag/han-shu.html">函数</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "zabbix-triggers-functions.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

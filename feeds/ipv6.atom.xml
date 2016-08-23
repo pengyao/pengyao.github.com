@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>PengYao's Weblog</title><link href="http://pengyao.org/" rel="alternate"></link><link href="http://pengyao.org/feeds/ipv6.atom.xml" rel="self"></link><id>http://pengyao.org/</id><updated>2013-04-15T00:00:00+08:00</updated><entry><title>IPv6学习资源</title><link href="http://pengyao.org/ipv6-resource.html" rel="alternate"></link><updated>2013-04-15T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-04-15:ipv6-resource.html</id><summary type="html">&lt;h2 id="rfc"&gt;RFC&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;RFC4291(IPv6 Addressing Architecture): &lt;a href="http://www.ietf.org/rfc/rfc4291.txt"&gt;http://www.ietf.org/rfc/rfc4291.txt&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="os"&gt;OS&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Linux IPv6 HOWTO(en): &lt;a href="http://www.tldp.org/HOWTO/Linux+IPv6-HOWTO/"&gt;http://www.tldp.org/HOWTO/Linux+IPv6-HOWTO/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Linux IPv6 HOWTO(zh_tw): &lt;a href="http://www.linux.org.tw/CLDP/OLD/Linux-IPv6-HOWTO.html"&gt;http://www.linux.org.tw/CLDP/OLD/Linux-IPv6-HOWTO.html&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;FreeBSD使用手册-高级网络-IPv6: &lt;a href="http://www.freebsd.org/doc/zh_CN/books/handbook/network-ipv6.html"&gt;http://www.freebsd.org/doc/zh_CN/books/handbook/network-ipv6.html&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="db"&gt;DB&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;MySQL IPv6 Support: &lt;a href="http://dev.mysql.com/doc/refman/5.5/en/ipv6-support.html"&gt;http://dev.mysql.com/doc/refman/5.5/en/ipv6-support.html&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</summary><category term="Linux"></category><category term="IPv6"></category><category term="resource"></category></entry></feed>

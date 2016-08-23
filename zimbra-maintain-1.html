@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="http://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="http://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="zimbra, maintain">
+
+  <title>
+    PengYao's Weblog
+&ndash; Zimbra维护资料  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="http://pengyao.org">
+        <img src="http://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="http://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="http://pengyao.org">Index</a> &brvbar; <a href="http://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="http://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/zimbra-maintain-1.html">Zimbra维护资料</a></h3>
+  </div>
+  <div class="article_text">
+    <p>近期Mail系统切换至<a href="http://www.zimbra.com/">Zimbra</a>, 整理下日常维护中用到的资料.</p>
+<p>Zimbra Wiki: <a href="http://wiki.zimbra.com/wiki/">http://wiki.zimbra.com/wiki/</a></p>
+<h2 id="admin">重置Admin密码</h2>
+<ul>
+<li>参考资料: <a href="http://wiki.zimbra.com/wiki/Admin_Password_Reset">http://wiki.zimbra.com/wiki/Admin_Password_Reset</a></li>
+</ul>
+<p>操作方法: </p>
+<div class="codehilite"><pre><span></span># su - zimbra
+$ zmprov sp &lt;admin email address&gt; &lt;new password&gt; 
+$ zmprov gaaa                        //列出当前所有administrator账户
+</pre></div>
+
+
+<h2 id="web-clienthttps">Web Client切换为HTTPS</h2>
+<ul>
+<li>参考资料: <a href="http://www.zimbra.com/docs/os/6.0.8/administration_guide/A_app-command-line.13.13.html">http://www.zimbra.com/docs/os/6.0.8/administration_guide/A_app-command-line.13.13.html</a></li>
+</ul>
+<p>zmtlsctl [metod]，支持的metod如下:
+</p>
+<table border="1"> 
+<tr><th> method </th><th> 描述 </th><th> 备注 
+</th></tr><tr><td>http</td><td>只提供HTTP的访问方式</td><td>-
+</td></tr><tr><td>https</td><td>只提供HTTPS的访问方式，只允许使用https://访问，不允许使用http://访问</td><td>-
+</td></tr><tr><td>mixed</td><td>如果用户使用htt://访问，登录时将自动切换成https://，登录完成后普通session流量将使用http://， 如果用户使用https://访问，将一直使用https://</td><td>-
+</td></tr><tr><td>both</td><td>用户可以使用http://和https://访问</td><td>-
+</td></tr><tr><td>redirect</td><td>如果用户使用http://访问，将自动切换成https://进行之后的所有访问</td><td>-
+</td></tr></table></p>
+<p>切换方法:</p>
+<div class="codehilite"><pre><span></span># su - zimbra
+$ zmtlsctl redirect
+$ zmmailboxdctl restart
+</pre></div>
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-08-26</p>
+    <p>Category: <a href="http://pengyao.org/category/zimbra.html">Zimbra</a>
+ &ndash; Tags:
+      <a href="http://pengyao.org/tag/zimbra.html">zimbra</a>,      <a href="http://pengyao.org/tag/maintain.html">maintain</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "zimbra-maintain-1.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

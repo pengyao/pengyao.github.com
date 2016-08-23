@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="http://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="http://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<link href="http://pengyao.org/feeds/saltstack.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog SaltStack Category Atom" />
+
+  <title>
+    PengYao's Weblog
+&ndash; Category: SaltStack  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="http://pengyao.org">
+        <img src="http://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="http://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="http://pengyao.org">Index</a> &brvbar; <a href="http://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="http://pengyao.org/feeds/all.atom.xml">Atom</a>
+&gt; Category: SaltStack
+&brvbar; <a href="http://pengyao.org/feeds/saltstack.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/salt-zeromq-01.html">Salt中ZeroMQ那点事</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last"><a class="reference external" href="https://github.com/saltstack/salt">Salt</a> 底层网络架构采用 <a class="reference external" href="http://zeromq.org/">ZeroMQ</a> 进行实现(2014.1及之前版本, 从2014.7起, Salt新增 <a class="reference external" href="https://github.com/saltstack/raet">RAET</a> ), 那么Salt都使用了ZeroMQ哪些模式? 各个组件间又是如何协作的?</p>
+
+  </div>
+</article>
+<hr />
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/salt-pillar-01.html">Salt中Pillar那点事</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last">在 <a class="reference external" href="http://saltstack.com/">SaltStack</a> 中, Pillar作为定义minion全局数据的接口. 那么在Salt内部, Pillar是如何工作的? 在哪些情况下, 使用Pillar需要先执行刷新操作? 而哪些又不需要?</p>
+
+  </div>
+</article>
+<hr />
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/saltstack_master_retuner_over_event_system.html">基于Salt Event系统构建Master端returner</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last">SaltStack的returner是由minion端主动连接returner完成执行结果的存储, 在部分场景下并不能满足需求. 由于Salt底层已经构建了一套Event系统, 所有的操作均会产生event. 因此基于Salt Event System构建Master端returner成为一种可能.</p>
+
+  </div>
+</article>
+<hr />
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/saltstack_event_system_listen_events.html">SaltStack Event系统监听events测试</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last">SaltStack 0.10版本中, 基于ZeroMQ publish socket, 新增了Event系统, 允许其他进程连接该socket并监听event bus上的events. 本文对SaltStack Event系统进行监听events测试.</p>
+
+  </div>
+</article>
+<hr />
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/reclass-salt-01.html">Salt整合reclass测试</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last">reclass是一个外部节点分类器(External Node Classifier, ENC), 可以与自动化管理工具如PUPPET, Salt及Ansible进行整合. 就对reclass进行下学习, 看能为Salt带来什么.</p>
+
+  </div>
+</article>
+<hr />
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/salt-nodegroup-complex.html">Salt配置复杂nodegroup</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last"><a class="reference external" href="http://saltstack.com/">SaltStack</a> 支持Nodegroup嵌套Nodegroup, 进而实现复杂Nodegroup</p>
+
+  </div>
+</article>
+<hr />
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/salt-api-deploy-and-use.html">Salt-API安装配置及使用</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last"><a class="reference external" href="http://saltstack.com/">SaltStack</a> 官方提供有REST API格式的 <a class="reference external" href="https://github.com/saltstack/salt-api">salt-api</a> 项目, 与第三方系统集成将变得非常简单。 本文将讲述如何安装配置及使用Salt-API。</p>
+
+  </div>
+</article>
+<hr />
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/howto_configure_linux_virtual_server_using_saltstack.html">基于SaltStack完成LVS的配置管理</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last">SaltStack最新代码中已经包含了对LVS(Linux Virutal Server)的支持, 本文将简要描述如何基于SaltStack完成LVS Loadblance(DR)及RealServer的配置管理</p>
+
+  </div>
+</article>
+<hr />
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/howto_setup_salt_ssh_from_minion.html">基于Salt Master/Minions快速构建Salt SSH环境</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last">Salt 0.17版本重要的特性是引入了Salt SSH系统，本文基于已有的SaltStack Master/Minions环境,快速构建Salt SSH维护环境, 提供Salt多重维护方式.</p>
+
+  </div>
+</article>
+<hr />
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/howto_configure_a_multi_master_saltstack_setup.html">【翻译】如何建立多Master的SaltStack环境</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last">翻译的《How To Configure A Multi-Master SaltStack Setup》</p>
+
+  </div>
+</article>
+
+<footer>
+<div id="paginator">
+<a href="http://pengyao.org/category/saltstack3.html" class="button_accent">&larr; Older Posts</a>
+
+<a href="http://pengyao.org/category/saltstack.html" class="button_accent">Newer Posts &rarr;</a>
+</div>
+</footer>
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

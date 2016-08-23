@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="http://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="http://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="zabbix, ipmi, dell">
+
+  <title>
+    PengYao's Weblog
+&ndash; 基于Zabbix IPMI监控服务器硬件状况  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="http://pengyao.org">
+        <img src="http://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="http://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="http://pengyao.org">Index</a> &brvbar; <a href="http://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="http://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/zabbix-monitor-ipmi-1.html">基于Zabbix IPMI监控服务器硬件状况</a></h3>
+  </div>
+  <div class="article_text">
+    <p>最近温度升高，IDC空调也开始不给力了(谣传12306曾因空调问题导致业务无法工作), 为了防患未然，将可能引发的故障扼杀在萌芽里。由于之前已经部署了Zabbix监控系统，本次将结合Zabbix自带的IPMI，完成服务器温度及风扇转速的监控.</p>
+<h2 id="_1">环境说明</h2>
+<h3 id="_2">被监控端</h3>
+<ul>
+<li>服务器型号：Dell PowerEdge R415，配置有iDrac Enterprise</li>
+<li>安装系统: CentOS 6.3 </li>
+<li>规划分配的IPMI地址: 10.0.2.121</li>
+</ul>
+<h3 id="zabbix">Zabbix监控平台说明</h3>
+<ul>
+<li>Zabbix版本: 2.0.4，在安装时，已经<strong>--with-openipmi</strong></li>
+<li>Zabbix网络接口可以连通10.0.2.121</li>
+</ul>
+<h2 id="_3">前置学习</h2>
+<ul>
+<li>维基百科IPMI: <a href="http://zh.wikipedia.org/wiki/IPMI">http://zh.wikipedia.org/wiki/IPMI</a></li>
+<li>IBM DeveloperWorks -- 使用ipmitool实现Linux系统下对服务器的ipmi管理: <a href="http://www.ibm.com/developerworks/cn/linux/l-ipmi/">http://www.ibm.com/developerworks/cn/linux/l-ipmi/</a></li>
+<li>Dell -- Managing Dell PowerEdge Servers Using IPMItool: <a href="http://www.dell.com/downloads/global/power/ps4q04-20040204-Murphy.pdf">http://www.dell.com/downloads/global/power/ps4q04-20040204-Murphy.pdf</a></li>
+<li>Zabbix IPMI checks: <a href="https://www.zabbix.com/documentation/2.0/manual/config/items/itemtypes/ipmi">https://www.zabbix.com/documentation/2.0/manual/config/items/itemtypes/ipmi</a></li>
+<li>使用IPMITOOL实现终端重定向(课外读物): <a href="http://docs.linuxtone.org/ebooks/Dell/ipmitool.pdf">http://docs.linuxtone.org/ebooks/Dell/ipmitool.pdf</a></li>
+</ul>
+<h2 id="ipmi">配置IPMI</h2>
+<h3 id="ipmi_1">配置IPMI地址</h3>
+<p>可以参考前置推荐中的《Managing Dell PowerEdge Servers Using IPMItool》在服务器启动时进行IPMI地址的配置，并开启IPMI Over LAN</p>
+<p>如果当前服务器已经处于运行状态，可以通过发行版自带的IPMItool进行IPMI的配置，以下是配置说明:</p>
+<p>首先安装IPMItool软件包并开启IPMI服务:</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><span class="c1"># yum install OpenIPMI ipmitool</span>
+<span class="c1"># service ipmi start</span>
+</pre></div>
+</td></tr></table>
+
+<p>启动服务，将自动添加直接连接BMC的设备驱动。</p>
+<p>配置IPMI地址:</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><span class="c1"># ipmitool lan set 1 ipaddr 10.0.2.121</span>
+<span class="c1"># ipmitool lan set 1 netmask 255.255.255.0</span>
+<span class="c1"># ipmitool lan set 1 defgw ipaddr 10.0.2.1</span>
+<span class="c1"># ipmitool lan print 1</span>
+</pre></div>
+</td></tr></table>
+
+<p>将本机的IPMI地址配置为10.0.2.121/24,网关为10.0.2.1</p>
+<p>开启IPMI Over LAN</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><span class="c1"># ipmitool lan set 1 access on</span>
+</pre></div>
+</td></tr></table>
+
+<h3 id="_4">配置用户</h3>
+<p>本次的需求为监控服务器传感器信息，只需要USER级别用户即可.</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><span class="c1"># ipmitool user set name 15 sensor</span>
+<span class="c1"># ipmitool user set password 15 sensor_pass</span>
+<span class="c1"># ipmitool user enable 15</span>
+<span class="c1"># ipmitool user priv 15 2 1</span>
+<span class="c1"># ipmitool user list 1</span>
+</pre></div>
+</td></tr></table>
+
+<p>将建立id为15（为嘛是15不是13，因为俺喜欢15这个数字），用户名为sensor，密码为sensor_pass,权限为User(对应2)</p>
+<h3 id="_5">测试</h3>
+<p>登录Zabbix服务器，通过ipmitool远程访问Dell服务器传感器信息</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><span class="c1"># ipmitool -H 10.0.2.121  -Usensor -L USER sensor list</span>
+</pre></div>
+</td></tr></table>
+
+<h2 id="zabbix_1">配置Zabbix</h2>
+<ul>
+<li>注：为了支持IPMI,需要在zabbix server/proxy安装时增加<strong>--with-openipmi</strong>参数</li>
+</ul>
+<p>服务器端配置zabbix IPMI pollers</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><span class="c1"># sed -i &#39;/# StartIPMIPollers=0/aStartIPMIPollers=5&#39; zabbix_server.conf</span>
+<span class="c1"># service zabbix-server restart</span>
+</pre></div>
+</td></tr></table>
+
+<p>导入监控模板(模板下载地址: <a href="https://raw.github.com/pengyao/zabbix/master/Server/templates/zbx_templates_DELL_R415.xml">https://raw.github.com/pengyao/zabbix/master/Server/templates/zbx_templates_DELL_R415.xml</a>)</p>
+<p>添加监控主机，关联上本模板，并在<strong>IPMI</strong>页面，设置<em>Authentication algorithm</em>为<em>Default</em>, <em>Privilege level</em>为<em>User</em>, <em>Username</em>为<em>sensor</em>, <em>Password</em>为<em>sensor_pass</em>，保存即可</p>
+<h2 id="_6">总结</h2>
+<p>在应用过程中，发现当前Zabbix IPMI监控效率较低，希望新版本能够有所改善</p>
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-04-27</p>
+    <p>Category: <a href="http://pengyao.org/category/zabbix.html">Zabbix</a>
+ &ndash; Tags:
+      <a href="http://pengyao.org/tag/zabbix.html">zabbix</a>,      <a href="http://pengyao.org/tag/ipmi.html">ipmi</a>,      <a href="http://pengyao.org/tag/dell.html">dell</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "zabbix-monitor-ipmi-1.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

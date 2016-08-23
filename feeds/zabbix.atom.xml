@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>PengYao's Weblog</title><link href="http://pengyao.org/" rel="alternate"></link><link href="http://pengyao.org/feeds/zabbix.atom.xml" rel="self"></link><id>http://pengyao.org/</id><updated>2013-05-18T00:00:00+08:00</updated><entry><title>Zabbix Trigger表达式实例</title><link href="http://pengyao.org/zabbix-trigger-example-1.html" rel="alternate"></link><updated>2013-05-18T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-05-18:zabbix-trigger-example-1.html</id><summary type="html">&lt;p&gt;Zabbix提供强大的触发器(Trigger)函数以方便进行更为灵活的报警及后续动作，具体触发器函数可以访问&lt;a href="https://www.zabbix.com/documentation/2.0/manual/appendix/triggers/functions"&gt;https://www.zabbix.com/documentation/2.0/manual/appendix/triggers/functions&lt;/a&gt;, 之前也有翻译本文章，地址为: &lt;a href="http://pengyao.org/zabbix-triggers-functions.html"&gt;http://pengyao.org/zabbix-triggers-functions.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;今天用实例来说明常见的监控需求，应该如何来编写Trigger表达式. 主人公就暂且叫做"绿肥"吧.&lt;/p&gt;
+&lt;h2 id="_1"&gt;前奏&lt;/h2&gt;
+&lt;p&gt;"绿肥，别整天就知道聊QQ，也关注下服务器运行情况吧." 老大颇不满意的说.&lt;/p&gt;
+&lt;p&gt;"哦"，绿肥只好先应承下来&lt;/p&gt;
+&lt;p&gt;“关注服务器? 咋关注？” 绞尽脑汁，听说有个监控神器叫&lt;strong&gt;zabbix&lt;/strong&gt;, 按照手册里边说的部署上了zabbix、将"test-01"服务器也安装了agent, 添加了"&lt;em&gt;agent.ping&lt;/em&gt;" item用来测试agent是否可以连通； "&lt;em&gt;system.uptime&lt;/em&gt;" item用来收集主机运行时间; “&lt;em&gt;system.cpu.util[,idle]&lt;/em&gt;” item用来收集CPU空闲百分比.&lt;/p&gt;
+&lt;p&gt;收集完这些值，通过simple graph能看到运行状况，老大似乎很满意. 但接下来的一天, 主机不知道什么时候重启了，老大劈头盖脸的说“机器重启了都不知道？要这个监控有什么用？”&lt;/p&gt;
+&lt;p&gt;看来是时候学习下zabbix trigger了，看下什么情况下触发报警.&lt;/p&gt;
+&lt;h2 id="zabbix-trigger"&gt;Zabbix Trigger实例&lt;/h2&gt;
+&lt;p&gt;"得，还是先学习下怎么判断机器是否重启了吧"，绿肥喃喃的说&lt;/p&gt;
+&lt;p&gt;system.uptime映入眼帘，这个item是采集主机运行时间的,一直累加的计数器，如果当前采集值小于上一次的采集值，那就意味着机器重启了&lt;/p&gt;
+&lt;p&gt;怎么判断当前值小于上一次哪？ 查询手册发现&lt;strong&gt;change&lt;/strong&gt;函数, 看来对应的Trigger表达式是: &lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;{test-01:system.uptime.change(0)}&amp;lt;0
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;表达式加上后，配合上默认的Action规则，手动重启了下服务器，真的告警的耶，绿肥愉快的笑了起来.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;直到又一天的到来......&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;这天机器重启了，因为硬盘故障, 结果系统没起来, 直到老大发现...... &lt;/p&gt;
+&lt;p&gt;"哎，又挨了一通训", 不过的确是工作不到位，系统没启动都不知道，这工作做得真叫一个差&lt;/p&gt;
+&lt;p&gt;"怎么搞"，&lt;em&gt;agent.ping&lt;/em&gt;映入了眼帘，看来得拿它"出出气"了，ping不通都不告诉我，哼，不整治你整治谁&lt;/p&gt;
+&lt;p&gt;"系统没起来，也就意味着zabbix agent没启动起来，没启动起来，那就是说我大zabbix server根本取不到agent的数据，那么该用哪个函数那?", "&lt;strong&gt;nodata&lt;/strong&gt;"，对，就是它，写出来的表达式是这样的:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;{test-01:agent.ping.nodata(3m)}=1
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;三分钟取不到&lt;em&gt;agent.ping&lt;/em&gt;的值，那也就是说agent宕了或者服务器挂了，不错，不错.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;直到又一天的到来......&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;"什么情况，怎么网站打开这么慢？" 老大在那里嘟囔着&lt;/p&gt;
+&lt;p&gt;趁机看了下CPU使用率，我擦，已经持续一小时CPU 100%满负荷运行了，看来隔壁研发小妹又写了个死循环,不过我是不是得增加个CPU的报警?&lt;/p&gt;
+&lt;p&gt;说干就干，既然是CPU有问题，那就从CPU下手，之前增加过"&lt;em&gt;system.cpu.util[,idle]&lt;/em&gt;"的item,这次就写个trigger, 写出来的trigger是这个样子:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;{test-01:system.cpu.util[,idle].last(0)}&amp;lt;20
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;也就是说如果cpu空闲小于20%即CPU占用超过80%立即触发报警，嘿嘿，看来不错&lt;/p&gt;
+&lt;p&gt;一天过去了，邮箱里增加了几百封关于"CPU使用率超过80%的邮件"，查询一看，CPU使用率总是冒个尖就马上就下来了,看来它把这里当城门了，这里用&lt;em&gt;last(0)&lt;/em&gt;有点不靠谱，那么该用哪个函数哪？ 还得好好翻翻手册.&lt;/p&gt;
+&lt;p&gt;"最近几分钟，最近几分钟，最近几分钟"，绿肥若有所思的自言自语着......&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;{test-01:system.cpu.util[,idle].avg(3m)}&amp;lt;20
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;连续三分钟CPU使用率平均值超过80%触发报警, 有没有更狠一点的，三分钟CPU使用率持续在80%以上触发报警&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;{test-01:system.cpu.util[,idle].max(3m)}&amp;lt;20
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;连续三分钟CPU空闲率中的最大值小于20%即每一个值都小于20%，对应的是就是CPU使用率全部都在80%以上，看来这个的确更狠一点.&lt;/p&gt;
+&lt;p&gt;似乎还有点不妥，发现CPU占用率在79.9%左右竟然也给我报OK，不爽，不爽, 看来需求得调整为"连续三分钟CPU使用率超过80%触发报警，如果连续三分钟CPU使用率低于50%才认为恢复正常"&lt;/p&gt;
+&lt;p&gt;手册里边有个"&lt;strong&gt;TRIGGER.VALUE&lt;/strong&gt;"宏，看来得从这里下下手.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;TRIGGER.VALUE&lt;/strong&gt;对应的为Trigger状态，0代表OK, 1代表Problem，分解下需求:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;正常情况下连续三分钟CPU使用率超过80%，看起来表达式是:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;{TRIGGER.VALUE}=0&amp;amp;{test-01:system.cpu.util[,idle].max(3m)}&amp;lt;20
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;故障时连续三分钟CPU使用率低于50%恢复正常，即故障时刻CPU使用率持续三分钟高于50%依然为故障，表达式是这个样子的:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;{TRIGGER.VALUE}=1&amp;amp;{test-01:system.cpu.util[,idle].min(3m)}&amp;lt;50
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;然后整合下表达式，就成了下边这个样子:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;({TRIGGER.VALUE}=0&amp;amp;{test-01:system.cpu.util[,idle].max(3m)}&amp;lt;20) | ({TRIGGER.VALUE}=1&amp;amp;{test-01:system.cpu.util[,idle].min(3m)}&amp;lt;50)
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;不错，不错，看起来多高端，颇有成就感!&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;直到又一天的到来......&lt;/strong&gt;&lt;/p&gt;</summary><category term="zabbix"></category><category term="trigger"></category><category term="表达式"></category><category term="实例"></category></entry><entry><title>【翻译】Zabbix触发器支持的函数说明</title><link href="http://pengyao.org/zabbix-triggers-functions.html" rel="alternate"></link><updated>2013-05-06T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-05-06:zabbix-triggers-functions.html</id><summary type="html">&lt;ul&gt;
+&lt;li&gt;原文出处: &lt;a href="https://www.zabbix.com/documentation/2.0/manual/appendix/triggers/functions"&gt;https://www.zabbix.com/documentation/2.0/manual/appendix/triggers/functions&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;译者: pengyao&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="abschange"&gt;abschange&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 直接忽略后边的参数&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int, str, text, log&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回最近获取到的值与之前的值的差值的绝对值. 对于字符串类型，0表示值相等，1表示值不同&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="avg"&gt;avg&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 秒或#num&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回指定时间间隔的平均值. 时间间隔可以通过第一个参数通过秒数设置或收集的值的数目(需要前边加上#,比如#5表示最近5次的值) 。如果有第二个，则表示时间漂移(time shift),例如像查询一天之前的一小时的平均值，对应的函数是 avg(3600,86400), 时间漂移是Zabbix 1.8.2加入进来的 &lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="change"&gt;change&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 直接忽略掉后边的参数&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int, str, text, log&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回最近获取到的值与之前的值的差值. 对于字符串类型，0表示值相等，1表示值不同&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="count"&gt;count&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 秒或#num &lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int, str, text, log&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回指定时间间隔内的数值统计。 时间间隔可以通过第一个参数通过秒数设置或收集的值数目（需要值前边加上#）。本函数可以支持第二个参数作为样本(pattern)数据，第三个参数作为操作(operator)参数，第四个参数作为时间漂移(time shift)参数. 对于样本，整数(iteeger)监控项实用精确匹配，浮点型(float)监控项允许偏差0.0000001&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;支持的操作(operators)类型:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;  eq: 相等
+  ne: 不相等 
+  gt: 大于
+  ge: 大于等于
+  lt: 小于
+  le: 小于等于
+  like: 内容匹配
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;对于整数和浮点型监控项目支持eq(默认), ne, gt, ge, lt, le；对于string、text、log监控项支持like(默认), eq, ne&lt;/p&gt;
+&lt;p&gt;例子:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;  count(600): 最近10分钟的值的个数
+  count(600,12): 最近10分钟，值等于12的个数
+  count(600,12,&amp;quot;gt&amp;quot;): 最近10分钟，值大于12的个数
+  count(#10,12,&amp;quot;gt&amp;quot;): 最近的10个值中，值大于12的个数
+  count(600,12,&amp;quot;gt&amp;quot;,86400): 24小时之前的前10分钟数据中，值大于12的个数
+  count(600,,,86400): 24小时之前的前10分钟数据的值的个数
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;#num参数从Zabbix 1.6.1起开始支持, time shift参数和字符串操作支持从Zabbix 1.8.2开始支持&lt;/p&gt;
+&lt;h2 id="date"&gt;date&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 直接忽略掉后边的参数&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: 所有(any)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回当前日期(格式为YYYYMMDD), 例如20031025&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="dayofmonth"&gt;dayofmonth&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 直接忽略掉后边的参数&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: 所有(any)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回当前是本月第几天(数值范围:1-31)，该函数从Zabbix 1.8.5起开始支持&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="dayofweek"&gt;dayofweek&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 直接忽略掉后边的参数&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: 所有(any)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回当前是本周的第几天(数值返回:1-7)，星期一是 1，星期天是7&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="delta"&gt;delta&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 秒或#num&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回指定时间间隔内的最大值与最小值的差值(max()-min())。时间间隔作为第一个参数可以是秒或者收集值的数目. 从Zabbix 1.8.2开始，支持可选的第二个参数 time_shift.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="diff"&gt;diff&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 忽略&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int, str, text, log&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回值为1 表示最近的值与之前的值不同，0为其他情况&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="fuzzytime"&gt;fuzzytime&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 秒&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回值为1表示监控项值的时间戳与Zabbix Server的时间多N秒, 0为其他. 常使用system.localtime来检查本地时间是否与Zabbix server时间相同.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="iregexp"&gt;iregexp&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 第一个为字符串，第二个为秒或#num&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: str, log, text &lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 与&lt;strong&gt;regexp&lt;/strong&gt;类似，区别是不区分大小写&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="last"&gt;last&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 秒或#num&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int, str, text, log&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 最近的值，如果为秒，则忽略，#num表示最近第N个值，请注意当前的#num和其他一些函数的#num的意思是不同的    &lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;例子:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;last(0) 等价于 last(#1)
+last(#3) 表示最近**第**3个值(并不是最近的三个值)
+本函数也支持第二个参数**time_shift**，例如
+last(0,86400) 返回一天前的最近的值
+如果在history中同一秒中有多个值存在，Zabbix不保证值的精确顺序
+#num从Zabbix 1.6.2起开始支持, timeshift从1.8.2其开始支持,可以查询 avg()函数获取它的使用方法
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2 id="logeventid"&gt;logeventid&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: string&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: log&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 检查最近的日志条目的Event ID是否匹配正则表达式. 参数为正则表达式,POSIX扩展样式. 当返回值为0时表示不匹配，1表示匹配。 该函数从Zabbix 1.8.5起开始支持.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="logseverity"&gt;logseverity&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 忽略 &lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: log&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回最近日志条目的日志等级(log severity). 当返回值为0时表示默认等级，N为具体对应等级(整数，常用于Windows event logs). Zabbix日志等级来源于Windows event log的Information列.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="logsource"&gt;logsource&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: string&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: log&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 检查最近的日志条目是否匹配参数的日志来源. 当返回值为0时表示不匹配，1表示匹配。通场用于Windows event logs监控. 例如 logsource["VMWare Server"]    &lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="max"&gt;max&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 秒或#num&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回指定时间间隔的最大值. 时间间隔作为第一个参数可以是秒或收集值的数目(前缀为#). 从Zabbix 1.8.2开始，函数支持第二个可选参数 time_shift，可以查看avg()函数获取它的使用方法.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="min"&gt;min&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 秒或#num&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回指定时间间隔的最小值. 时间间隔作为第一个参数可以是秒或收集值的数目(前缀为#). 从Zabbix 1.8.2开始，函数支持第二个可选参数 time_shift，可以查看avg()函数获取它的使用方法.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="nodata"&gt;nodata&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 秒&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: any&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 当返回值为1表示指定的间隔(间隔不应小于30秒)没有接收到数据, 0表示其他.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="now"&gt;now&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 忽略&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: any&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回距离Epoch(1970年1月1日 00:00:00 UTC)时间的秒数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="prev"&gt;prev&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 忽略&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int, str, text, log&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;:返回之前的值，类似于 last(#2)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="regexp"&gt;regexp&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 第一个参数为string, 第二个参数为秒或#num&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: str, log, text&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 检查最近的值是否匹配正则表达式，参数的正则表达式为POSIX扩展样式, 第二个参数为秒数或收集值的数目，将会处理多个值. 本函数区分大小写。当返回值为1时表示找到，0为其他.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="str"&gt;str&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 第一个参数为string, 第二个参数为秒或#num&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: str, log, text&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 查找最近值中的字符串。第一个参数指定查找的字符串，大小写敏感。第二个可选的参数指定秒数或收集值的数目，将会处理多个值。 当返回值为1时表示找到，0为其他.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="strlen"&gt;strlen&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 秒或#num&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: str, log, text&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 指定最近值的字符串长度(并非字节), 参数值类似于last函数. 例如strlen(0)等价于strlen(#1),strlen(#3)表示最近的第三个值, strlen(0,86400)表示一天前的最近的值. 该函数从Zabbix 1.8.4起开始支持&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="sum"&gt;sum&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 秒或#num&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: float, int&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回指定时间间隔中收集到的值的总和. 时间间隔作为第一个参数支持秒或收集值的数目(以#开始). 从Zabbix 1.8.2开始，本函数支持time_shift作为第二个参数。 可以查看avg函数获取它的用法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="time"&gt;time&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;: 忽略&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;支持值类型&lt;/strong&gt;: any&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;描述&lt;/strong&gt;: 返回当前时间，格式为HHMMSS，例如123055  &lt;/li&gt;
+&lt;/ul&gt;</summary><category term="zabbix"></category><category term="trigger"></category><category term="触发器"></category><category term="函数"></category></entry><entry><title>安装配置Zabbix Java GateWay</title><link href="http://pengyao.org/install-zabbix-java-gateway.html" rel="alternate"></link><updated>2013-05-05T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-05-05:install-zabbix-java-gateway.html</id><summary type="html">&lt;p&gt;从Zabbix 2.0开始，软件包中自带了一个用于监控JMX应用的程序，称为"Zabbix Java GateWay"，非常方便使用其来监控JMX，有一个朋友问我它如何安装使用，将之前个人在环境中使用的方法分享出来。&lt;/p&gt;
+&lt;h2 id="_1"&gt;环境说明&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;安装方法: 编译安装&lt;/li&gt;
+&lt;li&gt;Zabbix软件包: Zabbix-2.0.6.tar.gz&lt;/li&gt;
+&lt;li&gt;JDK版本: 1.7.0_21 &lt;/li&gt;
+&lt;li&gt;宿主系统: CentOS 6.3 X86_64&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="_2"&gt;前置配置&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;前置阅读: &lt;a href="https://www.zabbix.com/documentation/2.0/manual/concepts/java"&gt;https://www.zabbix.com/documentation/2.0/manual/concepts/java&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;由于Zabbix Java GateWay基于Java开发，所以需要先安装JDK&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="jdk"&gt;JDK安装配置&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;访问&lt;a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html"&gt;http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html&lt;/a&gt; 并下载对应系统的jdk包,下载完成后将包传输到需要安装Zabbix Java GateWay的主机上&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;解压并安装jdk:&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# tar xvf jdk-7u21-linux-x64.tar.gz -C /usr/localource /etc/bashrc&lt;/span&gt;
+&lt;span class="c1"&gt;# ln -s /usr/local/jdk1.7.0_21 /usr/local/jdk&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;配置JAVA_HOME及PATH&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3
+4&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# echo &amp;#39;JAVA_HOME=/usr/local/jdk&amp;#39; &amp;gt;&amp;gt; /etc/bashrc&lt;/span&gt;
+&lt;span class="c1"&gt;# echo &amp;#39;PATH=$PATH:${JAVA_HOME}/bin/&amp;#39; &amp;gt;&amp;gt; /etc/bashrc&lt;/span&gt;
+&lt;span class="c1"&gt;# echo &amp;#39;export JAVA_HOME PATH&amp;#39; &amp;gt;&amp;gt; /etc/bashrc&lt;/span&gt;
+&lt;span class="c1"&gt;# source /etc/bashrc&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="zabbix"&gt;下载Zabbix安装包&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;如果需要安装Zabbix Java GateWay的主机并没有下载Zabbix安装包，需要下载Zabbix安装包,下载地址: &lt;a href="http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.0.6/zabbix-2.0.6.tar.gz?r=http%3A%2F%2Fwww.zabbix.com%2Fdownload.php&amp;amp;ts=1367766309&amp;amp;use_mirror=jaist"&gt;http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.0.6/zabbix-2.0.6.tar.gz?r=http%3A%2F%2Fwww.zabbix.com%2Fdownload.php&amp;amp;ts=1367766309&amp;amp;use_mirror=jaist&lt;/a&gt; &lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;解压zabbix安装包&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# tar xvf zabbix-2.0.6.tar.gz&lt;/span&gt;
+&lt;span class="c1"&gt;# cd zabbix-2.0.6&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="zabbix-java-gateway"&gt;安装Zabbix Java GateWay&lt;/h2&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3
+4
+5&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# ./configure --prefix=/usr/local/zabbix_java_gateway-2.0.6 --enable-java&lt;/span&gt;
+&lt;span class="c1"&gt;# make &amp;amp;&amp;amp; make install&lt;/span&gt;
+&lt;span class="c1"&gt;# ln -s /usr/local/zabbix_java_gateway-2.0.6 /usr/local/zabbix_java_gateway&lt;/span&gt;
+&lt;span class="c1"&gt;# test -d /etc/zabbix || mkdir /etc/zabbix&lt;/span&gt;
+&lt;span class="c1"&gt;# cp /usr/local/zabbix_java_gateway/sbin/zabbix_java/settings.sh /etc/zabbix/zabbix_java_gateway.conf&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;Zabbix中自带的zabbix_java_gateway维护脚本比较差，重写了维护脚本, 下载地址: &lt;a href="https://raw.github.com/pengyao/zabbix/master/Zabbix_Java_GateWay/scripts/zabbix_java_gateway"&gt;https://raw.github.com/pengyao/zabbix/master/Zabbix_Java_GateWay/scripts/zabbix_java_gateway&lt;/a&gt;&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# wget https://raw.github.com/pengyao/zabbix/master/Zabbix_Java_GateWay/scripts/zabbix_java_gateway -O /etc/init.d/zabbix_java_gateway&lt;/span&gt;
+&lt;span class="c1"&gt;# chmod +x /etc/init.d/zabbix_java_gateway&lt;/span&gt;
+&lt;span class="c1"&gt;# chkconfig zabbix_java_gateway on&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;h2 id="zabbix-java-gateway_1"&gt;配置Zabbix Java GateWay&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;配置文件: /etc/zabbix/zabbix_java_gateway.conf&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;支持的配置选项为:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;选项说明&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;LISTEN_IP&lt;/td&gt;
+&lt;td&gt;指定bind的地址,默认值为0.0.0.0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;LISTEN_PORT&lt;/td&gt;
+&lt;td&gt;指定bind的端口,默认值为10052&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;PID_FILE&lt;/td&gt;
+&lt;td&gt;指定PID文件存放目录，默认为 /tmp/zabbix_java.pid&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;START_POLLERS&lt;/td&gt;
+&lt;td&gt;指定启动多少进程, 默认为5&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Zabbix Java GateWay启动后，也需要在Zabbix Server/Proxy上进行配置,对应的配置文件选项为:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;选项说明&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;JavaGateway&lt;/td&gt;
+&lt;td&gt;指定Zabbix Java GateWay地址&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;JavaGatewayPort&lt;/td&gt;
+&lt;td&gt;指定Zabbix Java GateWay端口，默认为10052&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;StartJavaPollers&lt;/td&gt;
+&lt;td&gt;指定启动时启动的Java Pollers数量&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;注意&lt;/strong&gt;：Zabbix Server/Proxy中的StartJavaPollers要小于等于Zabbix Java GateWay配置文件中的START_POLLERS&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;关于如何添加JMX监控项，请访问: &lt;a href="https://www.zabbix.com/documentation/2.0/manual/config/items/itemtypes/jmx_monitoring"&gt;https://www.zabbix.com/documentation/2.0/manual/config/items/itemtypes/jmx_monitoring&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;小贴士&lt;/strong&gt;：Zabbix Java GateWay类似于Proxy(只是不存储数据和配置)，所以在使用Proxy/Node等分布式环境中，推荐在每个区域部署对应的Zabbix Java GateWay&lt;/li&gt;
+&lt;/ul&gt;</summary><category term="java"></category><category term="zabbix"></category><category term="java gateway"></category><category term="安装"></category></entry><entry><title>基于Zabbix IPMI监控服务器硬件状况</title><link href="http://pengyao.org/zabbix-monitor-ipmi-1.html" rel="alternate"></link><updated>2013-04-27T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-04-27:zabbix-monitor-ipmi-1.html</id><summary type="html">&lt;p&gt;最近温度升高，IDC空调也开始不给力了(谣传12306曾因空调问题导致业务无法工作), 为了防患未然，将可能引发的故障扼杀在萌芽里。由于之前已经部署了Zabbix监控系统，本次将结合Zabbix自带的IPMI，完成服务器温度及风扇转速的监控.&lt;/p&gt;
+&lt;h2 id="_1"&gt;环境说明&lt;/h2&gt;
+&lt;h3 id="_2"&gt;被监控端&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;服务器型号：Dell PowerEdge R415，配置有iDrac Enterprise&lt;/li&gt;
+&lt;li&gt;安装系统: CentOS 6.3 &lt;/li&gt;
+&lt;li&gt;规划分配的IPMI地址: 10.0.2.121&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="zabbix"&gt;Zabbix监控平台说明&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Zabbix版本: 2.0.4，在安装时，已经&lt;strong&gt;--with-openipmi&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;Zabbix网络接口可以连通10.0.2.121&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="_3"&gt;前置学习&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;维基百科IPMI: &lt;a href="http://zh.wikipedia.org/wiki/IPMI"&gt;http://zh.wikipedia.org/wiki/IPMI&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;IBM DeveloperWorks -- 使用ipmitool实现Linux系统下对服务器的ipmi管理: &lt;a href="http://www.ibm.com/developerworks/cn/linux/l-ipmi/"&gt;http://www.ibm.com/developerworks/cn/linux/l-ipmi/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Dell -- Managing Dell PowerEdge Servers Using IPMItool: &lt;a href="http://www.dell.com/downloads/global/power/ps4q04-20040204-Murphy.pdf"&gt;http://www.dell.com/downloads/global/power/ps4q04-20040204-Murphy.pdf&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Zabbix IPMI checks: &lt;a href="https://www.zabbix.com/documentation/2.0/manual/config/items/itemtypes/ipmi"&gt;https://www.zabbix.com/documentation/2.0/manual/config/items/itemtypes/ipmi&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;使用IPMITOOL实现终端重定向(课外读物): &lt;a href="http://docs.linuxtone.org/ebooks/Dell/ipmitool.pdf"&gt;http://docs.linuxtone.org/ebooks/Dell/ipmitool.pdf&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="ipmi"&gt;配置IPMI&lt;/h2&gt;
+&lt;h3 id="ipmi_1"&gt;配置IPMI地址&lt;/h3&gt;
+&lt;p&gt;可以参考前置推荐中的《Managing Dell PowerEdge Servers Using IPMItool》在服务器启动时进行IPMI地址的配置，并开启IPMI Over LAN&lt;/p&gt;
+&lt;p&gt;如果当前服务器已经处于运行状态，可以通过发行版自带的IPMItool进行IPMI的配置，以下是配置说明:&lt;/p&gt;
+&lt;p&gt;首先安装IPMItool软件包并开启IPMI服务:&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# yum install OpenIPMI ipmitool&lt;/span&gt;
+&lt;span class="c1"&gt;# service ipmi start&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;启动服务，将自动添加直接连接BMC的设备驱动。&lt;/p&gt;
+&lt;p&gt;配置IPMI地址:&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3
+4&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# ipmitool lan set 1 ipaddr 10.0.2.121&lt;/span&gt;
+&lt;span class="c1"&gt;# ipmitool lan set 1 netmask 255.255.255.0&lt;/span&gt;
+&lt;span class="c1"&gt;# ipmitool lan set 1 defgw ipaddr 10.0.2.1&lt;/span&gt;
+&lt;span class="c1"&gt;# ipmitool lan print 1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;将本机的IPMI地址配置为10.0.2.121/24,网关为10.0.2.1&lt;/p&gt;
+&lt;p&gt;开启IPMI Over LAN&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# ipmitool lan set 1 access on&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;h3 id="_4"&gt;配置用户&lt;/h3&gt;
+&lt;p&gt;本次的需求为监控服务器传感器信息，只需要USER级别用户即可.&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3
+4
+5&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# ipmitool user set name 15 sensor&lt;/span&gt;
+&lt;span class="c1"&gt;# ipmitool user set password 15 sensor_pass&lt;/span&gt;
+&lt;span class="c1"&gt;# ipmitool user enable 15&lt;/span&gt;
+&lt;span class="c1"&gt;# ipmitool user priv 15 2 1&lt;/span&gt;
+&lt;span class="c1"&gt;# ipmitool user list 1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;将建立id为15（为嘛是15不是13，因为俺喜欢15这个数字），用户名为sensor，密码为sensor_pass,权限为User(对应2)&lt;/p&gt;
+&lt;h3 id="_5"&gt;测试&lt;/h3&gt;
+&lt;p&gt;登录Zabbix服务器，通过ipmitool远程访问Dell服务器传感器信息&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# ipmitool -H 10.0.2.121  -Usensor -L USER sensor list&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;h2 id="zabbix_1"&gt;配置Zabbix&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;注：为了支持IPMI,需要在zabbix server/proxy安装时增加&lt;strong&gt;--with-openipmi&lt;/strong&gt;参数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;服务器端配置zabbix IPMI pollers&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# sed -i &amp;#39;/# StartIPMIPollers=0/aStartIPMIPollers=5&amp;#39; zabbix_server.conf&lt;/span&gt;
+&lt;span class="c1"&gt;# service zabbix-server restart&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;导入监控模板(模板下载地址: &lt;a href="https://raw.github.com/pengyao/zabbix/master/Server/templates/zbx_templates_DELL_R415.xml"&gt;https://raw.github.com/pengyao/zabbix/master/Server/templates/zbx_templates_DELL_R415.xml&lt;/a&gt;)&lt;/p&gt;
+&lt;p&gt;添加监控主机，关联上本模板，并在&lt;strong&gt;IPMI&lt;/strong&gt;页面，设置&lt;em&gt;Authentication algorithm&lt;/em&gt;为&lt;em&gt;Default&lt;/em&gt;, &lt;em&gt;Privilege level&lt;/em&gt;为&lt;em&gt;User&lt;/em&gt;, &lt;em&gt;Username&lt;/em&gt;为&lt;em&gt;sensor&lt;/em&gt;, &lt;em&gt;Password&lt;/em&gt;为&lt;em&gt;sensor_pass&lt;/em&gt;，保存即可&lt;/p&gt;
+&lt;h2 id="_6"&gt;总结&lt;/h2&gt;
+&lt;p&gt;在应用过程中，发现当前Zabbix IPMI监控效率较低，希望新版本能够有所改善&lt;/p&gt;</summary><category term="zabbix"></category><category term="ipmi"></category><category term="dell"></category></entry><entry><title>加入Zabbix官方前端翻译流程</title><link href="http://pengyao.org/zabbix-frontend-translate-flows.html" rel="alternate"></link><updated>2013-04-23T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-04-23:zabbix-frontend-translate-flows.html</id><summary type="html">&lt;p&gt;&lt;a href="http://www.zabbix.com"&gt;Zabbix&lt;/a&gt;前端(Frontend)提供多语言支持，这样就方便了在本地用户中的推广。由于&lt;a href="http://www.zabbix.com"&gt;Zabbix&lt;/a&gt;是一个开源的网络监控类软件，其本地化翻译类工作主要依靠社区进行支持，本文将讲述下如何加入到Zabbix官方前端翻译中的流程(或者直接访问&lt;a href="https://www.zabbix.org/wiki/Translating_Zabbix"&gt;https://www.zabbix.org/wiki/Translating_Zabbix&lt;/a&gt;获取相关内容)，以供翻译爱好者参考.&lt;/p&gt;
+&lt;p&gt;小贴士: Zabbix官方前端翻译平台基于&lt;a href="http://pootle.translatehouse.org/index.html"&gt;pootle&lt;/a&gt;建设，地址为:&lt;a href="http://www.zabbix.org/pootle/"&gt;http://www.zabbix.org/pootle/&lt;/a&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;首先登录&lt;a href="https://www.zabbix.org/wiki/Special:UserLogin"&gt;Zabbix Wiki Login&lt;/a&gt;，创建自己的账户&lt;/li&gt;
+&lt;li&gt;同时也需要在&lt;a href="https://www.zabbix.org/pootle/"&gt;Zabbix pootle&lt;/a&gt;创建同名账户 &lt;/li&gt;
+&lt;li&gt;订阅&lt;a href="https://www.zabbix.org/wiki/Translating_Zabbix#Mailing_list"&gt;Zabbix翻译邮件列表&lt;/a&gt; &lt;/li&gt;
+&lt;li&gt;将账户信息加入&lt;a href="https://www.zabbix.org/wiki/Translating_Zabbix#Translation_maintainers"&gt;Zabbix翻译维护者表格&lt;/a&gt;中&lt;/li&gt;
+&lt;li&gt;发送账户名称至&lt;a href="&amp;#109;&amp;#97;&amp;#105;&amp;#108;&amp;#116;&amp;#111;&amp;#58;&amp;#115;&amp;#117;&amp;#112;&amp;#112;&amp;#111;&amp;#114;&amp;#116;&amp;#64;&amp;#122;&amp;#97;&amp;#98;&amp;#98;&amp;#105;&amp;#120;&amp;#46;&amp;#99;&amp;#111;&amp;#109;"&gt;&amp;#115;&amp;#117;&amp;#112;&amp;#112;&amp;#111;&amp;#114;&amp;#116;&amp;#64;&amp;#122;&amp;#97;&amp;#98;&amp;#98;&amp;#105;&amp;#120;&amp;#46;&amp;#99;&amp;#111;&amp;#109;&lt;/a&gt;, 以便官方给对应账户开启翻译权限&lt;/li&gt;
+&lt;li&gt;收到权限开放成功的邮件后，记得联系现有的翻译人员，以便沟通翻译进度，协同工作.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;欢迎大家支持Zabbix翻译工作，开源传万世！&lt;/p&gt;</summary><category term="zabbix"></category><category term="frontend"></category><category term="翻译"></category></entry><entry><title>Zabbix绘图显示中文</title><link href="http://pengyao.org/zabbix-frontend-graph-chinese.html" rel="alternate"></link><updated>2013-04-10T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-04-10:zabbix-frontend-graph-chinese.html</id><summary type="html">&lt;p&gt;国内的朋友喜欢在使用zabbix frontend时，将语言调整为中文，以方便使用，但调整后却发现绘图中部分字符显示为方框，其原因是因为zabbix自带的字体并不支持中文的缘故，要想正常使用，解决方法是增加中文字体.&lt;/p&gt;
+&lt;p&gt;本文假设zabbix frontend存放在&lt;em&gt;/var/lib/www/zabbix&lt;/em&gt;目录下,适用版本&lt;strong&gt;zabbix 2.0&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;zabbix frontend自带的字体文件存放在&lt;em&gt;/var/lib/www/zabbix/fonts/&lt;/em&gt;目录下，对应的文件名为&lt;em&gt;DejaVuSans.ttf&lt;/em&gt;, 下载支持中文的开源字体&lt;a href="http://sourceforge.net/projects/wqy/files/wqy-microhei/"&gt;文泉驿microhei字体&lt;/a&gt;:&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# wget &amp;#39;http://downloads.sourceforge.net/project/wqy/wqy-microhei/0.2.0-beta/wqy-microhei-0.2.0-beta.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fwqy%2Ffiles%2Fwqy-microhei%2F0.2.0-beta%2F&amp;amp;ts=1365584502&amp;amp;use_mirror=jaist&amp;#39; -O wqy-microhei-0.2.0-beta.tar.gz&lt;/span&gt;
+&lt;span class="c1"&gt;# tar xvf wqy-microhei-0.2.0-beta.tar.gz &lt;/span&gt;
+&lt;span class="c1"&gt;# cp wqy-microhei/wqy-microhei.ttc /var/lib/www/zabbix/fonts/wqy-microhei.ttf&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;修改&lt;em&gt;/var/lib/www/zabbix/include/defines.inc.php&lt;/em&gt;，将默认字体&lt;em&gt;DejaVuSans&lt;/em&gt;替换为&lt;em&gt;wqy-microhei&lt;/em&gt;字体:&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# sed -i &amp;#39;s/DejaVuSans/wqy-microhei/g&amp;#39; /var/lib/www/zabbix/include/definese.inc.php&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;重新访问zabbix frontend绘图，中文将完美显示。&lt;/p&gt;</summary><category term="zabbix"></category><category term="中文"></category></entry></feed>

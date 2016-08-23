@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>PengYao's Weblog</title><link href="http://pengyao.org/" rel="alternate"></link><link href="http://pengyao.org/feeds/zimbra.atom.xml" rel="self"></link><id>http://pengyao.org/</id><updated>2013-08-26T00:00:00+08:00</updated><entry><title>Zimbra维护资料</title><link href="http://pengyao.org/zimbra-maintain-1.html" rel="alternate"></link><updated>2013-08-26T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-08-26:zimbra-maintain-1.html</id><summary type="html">&lt;p&gt;近期Mail系统切换至&lt;a href="http://www.zimbra.com/"&gt;Zimbra&lt;/a&gt;, 整理下日常维护中用到的资料.&lt;/p&gt;
+&lt;p&gt;Zimbra Wiki: &lt;a href="http://wiki.zimbra.com/wiki/"&gt;http://wiki.zimbra.com/wiki/&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id="admin"&gt;重置Admin密码&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;参考资料: &lt;a href="http://wiki.zimbra.com/wiki/Admin_Password_Reset"&gt;http://wiki.zimbra.com/wiki/Admin_Password_Reset&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;操作方法: &lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;# su - zimbra
+$ zmprov sp &amp;lt;admin email address&amp;gt; &amp;lt;new password&amp;gt; 
+$ zmprov gaaa                        //列出当前所有administrator账户
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2 id="web-clienthttps"&gt;Web Client切换为HTTPS&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;参考资料: &lt;a href="http://www.zimbra.com/docs/os/6.0.8/administration_guide/A_app-command-line.13.13.html"&gt;http://www.zimbra.com/docs/os/6.0.8/administration_guide/A_app-command-line.13.13.html&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;zmtlsctl [metod]，支持的metod如下:
+&lt;/p&gt;
+&lt;table border="1"&gt; 
+&lt;tr&gt;&lt;th&gt; method &lt;/th&gt;&lt;th&gt; 描述 &lt;/th&gt;&lt;th&gt; 备注 
+&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;http&lt;/td&gt;&lt;td&gt;只提供HTTP的访问方式&lt;/td&gt;&lt;td&gt;-
+&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;https&lt;/td&gt;&lt;td&gt;只提供HTTPS的访问方式，只允许使用https://访问，不允许使用http://访问&lt;/td&gt;&lt;td&gt;-
+&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;mixed&lt;/td&gt;&lt;td&gt;如果用户使用htt://访问，登录时将自动切换成https://，登录完成后普通session流量将使用http://， 如果用户使用https://访问，将一直使用https://&lt;/td&gt;&lt;td&gt;-
+&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;both&lt;/td&gt;&lt;td&gt;用户可以使用http://和https://访问&lt;/td&gt;&lt;td&gt;-
+&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;redirect&lt;/td&gt;&lt;td&gt;如果用户使用http://访问，将自动切换成https://进行之后的所有访问&lt;/td&gt;&lt;td&gt;-
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/p&gt;
+&lt;p&gt;切换方法:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;# su - zimbra
+$ zmtlsctl redirect
+$ zmmailboxdctl restart
+&lt;/pre&gt;&lt;/div&gt;</summary><category term="zimbra"></category><category term="maintain"></category></entry><entry><title>Zimbra迁移资料</title><link href="http://pengyao.org/zimbra-migrate-1.html" rel="alternate"></link><updated>2013-08-26T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-08-26:zimbra-migrate-1.html</id><summary type="html">&lt;p&gt;近期Mail系统迁移至&lt;a href="http://www.zimbra.com"&gt;Zimbra&lt;/a&gt;, 整理下迁移过程中用到的资料.&lt;/p&gt;
+&lt;p&gt;Zimbra Wiki: &lt;a href="http://wiki.zimbra.com/wiki/"&gt;http://wiki.zimbra.com/wiki/&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id="pop"&gt;迁移后防止用户通过POP重复接收之前的邮件&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;参考资料: &lt;a href="http://wiki.zimbra.com/wiki/Prevent_duplicates_messages_for_POP3_users_post_migration"&gt;http://wiki.zimbra.com/wiki/Prevent_duplicates_messages_for_POP3_users_post_migration&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;POP3 Server会对每一个进入的邮件分配个唯一的数字(unique number, UIDL)，POP3的客户端下载邮件时会对比UIDL，这样就可以避开了同一封邮件重复接收的问题，只会下载新的UIDL邮件.&lt;/p&gt;
+&lt;p&gt;由于迁移了新的Server,邮件的UIDL并不做提供，因此会导致POP3客户端认为所有的邮件都是新的，导致邮件重复下载。解决方法为迁移后执行如下内容:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;# su - zimbra
+# zmpro ma &amp;lt;account&amp;gt; zimbraPrefPop3DownloadSince $(date &amp;quot;+%Y%m%d%H%M%S&amp;quot;Z)
+&lt;/pre&gt;&lt;/div&gt;</summary></entry></feed>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="http://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="http://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="">
+
+  <title>
+    PengYao's Weblog
+&ndash; Zimbra迁移资料  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="http://pengyao.org">
+        <img src="http://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="http://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="http://pengyao.org">Index</a> &brvbar; <a href="http://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="http://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/zimbra-migrate-1.html">Zimbra迁移资料</a></h3>
+  </div>
+  <div class="article_text">
+    <p>近期Mail系统迁移至<a href="http://www.zimbra.com">Zimbra</a>, 整理下迁移过程中用到的资料.</p>
+<p>Zimbra Wiki: <a href="http://wiki.zimbra.com/wiki/">http://wiki.zimbra.com/wiki/</a></p>
+<h2 id="pop">迁移后防止用户通过POP重复接收之前的邮件</h2>
+<ul>
+<li>参考资料: <a href="http://wiki.zimbra.com/wiki/Prevent_duplicates_messages_for_POP3_users_post_migration">http://wiki.zimbra.com/wiki/Prevent_duplicates_messages_for_POP3_users_post_migration</a></li>
+</ul>
+<p>POP3 Server会对每一个进入的邮件分配个唯一的数字(unique number, UIDL)，POP3的客户端下载邮件时会对比UIDL，这样就可以避开了同一封邮件重复接收的问题，只会下载新的UIDL邮件.</p>
+<p>由于迁移了新的Server,邮件的UIDL并不做提供，因此会导致POP3客户端认为所有的邮件都是新的，导致邮件重复下载。解决方法为迁移后执行如下内容:</p>
+<div class="codehilite"><pre><span></span># su - zimbra
+# zmpro ma &lt;account&gt; zimbraPrefPop3DownloadSince $(date &quot;+%Y%m%d%H%M%S&quot;Z)
+</pre></div>
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-08-26</p>
+    <p>Category: <a href="http://pengyao.org/category/zimbra.html">Zimbra</a>
+    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "zimbra-migrate-1.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

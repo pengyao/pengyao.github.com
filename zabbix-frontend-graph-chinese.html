@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="http://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="http://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="http://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="zabbix, 中文">
+
+  <title>
+    PengYao's Weblog
+&ndash; Zabbix绘图显示中文  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="http://pengyao.org">
+        <img src="http://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="http://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="http://pengyao.org">Index</a> &brvbar; <a href="http://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="http://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="http://pengyao.org/zabbix-frontend-graph-chinese.html">Zabbix绘图显示中文</a></h3>
+  </div>
+  <div class="article_text">
+    <p>国内的朋友喜欢在使用zabbix frontend时，将语言调整为中文，以方便使用，但调整后却发现绘图中部分字符显示为方框，其原因是因为zabbix自带的字体并不支持中文的缘故，要想正常使用，解决方法是增加中文字体.</p>
+<p>本文假设zabbix frontend存放在<em>/var/lib/www/zabbix</em>目录下,适用版本<strong>zabbix 2.0</strong></p>
+<p>zabbix frontend自带的字体文件存放在<em>/var/lib/www/zabbix/fonts/</em>目录下，对应的文件名为<em>DejaVuSans.ttf</em>, 下载支持中文的开源字体<a href="http://sourceforge.net/projects/wqy/files/wqy-microhei/">文泉驿microhei字体</a>:</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><span class="c1"># wget &#39;http://downloads.sourceforge.net/project/wqy/wqy-microhei/0.2.0-beta/wqy-microhei-0.2.0-beta.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fwqy%2Ffiles%2Fwqy-microhei%2F0.2.0-beta%2F&amp;ts=1365584502&amp;use_mirror=jaist&#39; -O wqy-microhei-0.2.0-beta.tar.gz</span>
+<span class="c1"># tar xvf wqy-microhei-0.2.0-beta.tar.gz </span>
+<span class="c1"># cp wqy-microhei/wqy-microhei.ttc /var/lib/www/zabbix/fonts/wqy-microhei.ttf</span>
+</pre></div>
+</td></tr></table>
+
+<p>修改<em>/var/lib/www/zabbix/include/defines.inc.php</em>，将默认字体<em>DejaVuSans</em>替换为<em>wqy-microhei</em>字体:</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><span class="c1"># sed -i &#39;s/DejaVuSans/wqy-microhei/g&#39; /var/lib/www/zabbix/include/definese.inc.php</span>
+</pre></div>
+</td></tr></table>
+
+<p>重新访问zabbix frontend绘图，中文将完美显示。</p>
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-04-10</p>
+    <p>Category: <a href="http://pengyao.org/category/zabbix.html">Zabbix</a>
+ &ndash; Tags:
+      <a href="http://pengyao.org/tag/zabbix.html">zabbix</a>,      <a href="http://pengyao.org/tag/zhong-wen.html">中文</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "zabbix-frontend-graph-chinese.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>
