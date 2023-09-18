@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="webserver, tomcat, manager, 字符接口, api">
+
+  <title>
+    PengYao's Weblog
+&ndash; Tomcat Manager Text API测试  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/tomcat-manager-text-api-test.html">Tomcat Manager Text API测试</a></h3>
+  </div>
+  <div class="article_text">
+    <div class="section" id="section-1">
+<h2>基本介绍</h2>
+<p>Tomcat Manager提供应用的状态查询, 部署, 维护等功能,  使用方法请参考: <a class="reference external" href="http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html">Tomcat Manager HowTo</a></p>
+<p>对Tomcat Manager的Text接口进行了测试, 附上测试用例及结果分析</p>
+</div>
+<div class="section" id="section-2">
+<h2>环境说明</h2>
+<ul class="simple">
+<li>Tomcat: 7.0.49</li>
+<li>Manager URL: <a class="reference external" href="http://127.0.0.1:8080/manager/">http://127.0.0.1:8080/manager/</a></li>
+<li>测试工具: curl</li>
+</ul>
+</div>
+<div class="section" id="manager">
+<h2>manager访问控制配置</h2>
+<ul>
+<li><p class="first">${CATALINA_BASE}/conf/tomcat-users.xml</p>
+<div class="highlight"><pre><span></span>......
+<span class="nt">&lt;tomcat-users&gt;</span>
+<span class="w">    </span><span class="nt">&lt;user</span><span class="w"> </span><span class="na">username=</span><span class="s">&quot;pengyao&quot;</span><span class="w"> </span><span class="na">password=</span><span class="s">&quot;pengyao_pass&quot;</span><span class="w"> </span><span class="na">roles=</span><span class="s">&quot;manager-script&quot;</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/tomcat-users&gt;</span>
+</pre></div>
+</li>
+<li><p class="first">${CATALINA_BASE}/conf/Catalina/localhost/manager.xml</p>
+<div class="highlight"><pre><span></span><span class="nt">&lt;Context</span><span class="w"> </span><span class="na">privileged=</span><span class="s">&quot;true&quot;</span><span class="w"> </span><span class="na">antiResourceLocking=</span><span class="s">&quot;false&quot;</span><span class="w">  </span><span class="na">docBase=</span><span class="s">&quot;${catalina.home}/webapps/manager&quot;</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Valve</span><span class="w"> </span><span class="na">className=</span><span class="s">&quot;org.apache.catalina.valves.RemoteAddrValve&quot;</span><span class="w"> </span><span class="na">allow=</span><span class="s">&quot;127.0.0.1&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/Context&gt;</span>
+</pre></div>
+</li>
+<li><p class="first">配置完成后需要重启Tomcat</p>
+</li>
+</ul>
+</div>
+<div class="section" id="section-3">
+<h2>测试</h2>
+<div class="section" id="section-4">
+<h3>查询服务信息</h3>
+<ul>
+<li><p class="first">Request:</p>
+<div class="highlight"><pre><span></span>curl<span class="w"> </span>-u<span class="w"> </span>pengyao:pengyao_pass<span class="w"> </span>http://127.0.0.1:8080/manager/text/serverinfo
+</pre></div>
+</li>
+<li><p class="first">Response:</p>
+<pre class="literal-block">
+OK - Server info
+Tomcat Version: Apache Tomcat/7.0.47
+OS Name: Linux
+OS Version: 2.6.32-358.11.1.el6.x86_64
+OS Architecture: amd64
+JVM Version: 1.6.0_45-b06
+JVM Vendor: Sun Microsystems Inc.
+</pre>
+</li>
+</ul>
+</div>
+<div class="section" id="section-5">
+<h3>获取当前已部署应用列表</h3>
+<ul>
+<li><p class="first">Request:</p>
+<div class="highlight"><pre><span></span>curl<span class="w"> </span>-u<span class="w"> </span>pengyao:pengyao_pass<span class="w"> </span>http://127.0.0.1:8080/manager/text/list
+</pre></div>
+</li>
+<li><p class="first">Response:</p>
+<pre class="literal-block">
+OK - Listed applications for virtual host localhost
+/:running:0:ROOT
+/manager:running:6:manager
+/docs:running:0:docs
+/examples:running:0:examples
+/host-manager:running:0:host-manager
+</pre>
+</li>
+</ul>
+<p>结果以冒号做分隔, 第一列为context path, 第二列为当前应用的状态, 第三列为当前活跃的session数, 第四列为appBase</p>
+</div>
+<div class="section" id="sessionssessions">
+<h3>获取应用sessions设置及当前sessions</h3>
+<ul>
+<li><p class="first">Request:</p>
+<div class="highlight"><pre><span></span>curl<span class="w"> </span>-u<span class="w"> </span>pengyao:pengyao_pass<span class="w"> </span>http://127.0.0.1:8080/manager/text/sessions?path<span class="o">=</span>/manager
+</pre></div>
+</li>
+<li><p class="first">Response:</p>
+<pre class="literal-block">
+OK - Session information for application at context path /manager
+Default maximum session inactive interval 30 minutes
+24 - &lt;25 minutes: 1 sessions
+26 - &lt;27 minutes: 1 sessions
+</pre>
+</li>
+</ul>
+</div>
+<div class="section" id="section-6">
+<h3>启动应用</h3>
+<ul>
+<li><p class="first">Request:</p>
+<div class="highlight"><pre><span></span>curl<span class="w"> </span>-u<span class="w"> </span>pengyao:pengyao_pass<span class="w"> </span>http://127.0.0.1:8080/manager/text/start?path<span class="o">=</span>/examples
+</pre></div>
+</li>
+<li><p class="first">Response:</p>
+<pre class="literal-block">
+OK - Started application at context path /examples
+</pre>
+</li>
+</ul>
+<p>如果指定的path(context path)不存在, 则报错:</p>
+<pre class="literal-block">
+FAIL - No context exists for path /pengyao
+</pre>
+</div>
+<div class="section" id="section-7">
+<h3>关闭应用</h3>
+<ul>
+<li><p class="first">Request:</p>
+<div class="highlight"><pre><span></span>curl<span class="w"> </span>-u<span class="w"> </span>pengyao:pengyao_pass<span class="w"> </span>http://127.0.0.1:8080/manager/text/stop?path<span class="o">=</span>/examples
+</pre></div>
+</li>
+<li><p class="first">Response:</p>
+<pre class="literal-block">
+OK - Stopped application at context path /examples
+</pre>
+</li>
+</ul>
+</div>
+<div class="section" id="section-8">
+<h3>重启应用</h3>
+<p>主要应用于更新了类或jar, 但没有配置 <em>reloadable</em>, 需要手动进行重启应用, 以使其生效</p>
+<ul>
+<li><p class="first">Request:</p>
+<div class="highlight"><pre><span></span>curl<span class="w"> </span>-u<span class="w"> </span>pengyao:pengyao_pass<span class="w"> </span>http://127.0.0.1:8080/manager/text/reload?path<span class="o">=</span>/examples
+</pre></div>
+</li>
+<li><p class="first">Response:</p>
+<pre class="literal-block">
+OK - Reloaded application at context path /examples
+</pre>
+</li>
+</ul>
+<p>如果应用reload前并不处于running状态, 则会报错:</p>
+<pre class="literal-block">
+FAIL - Encountered exception java.lang.IllegalStateException: Context with name [/examples] has not yet been started
+</pre>
+</div>
+<div class="section" id="section-9">
+<h3>卸载应用</h3>
+<ul>
+<li><p class="first">注意: 该操作将会删除 appBase及对应的war包, 请谨慎使用. 如果只是想暂停某应用, 请使用 <strong>关闭应用(stop)</strong> 方法</p>
+</li>
+<li><p class="first">Request:</p>
+<div class="highlight"><pre><span></span>curl<span class="w"> </span>-u<span class="w"> </span>pengyao:pengyao_pass<span class="w"> </span>http://127.0.0.1:8080/manager/text/undeploy?path<span class="o">=</span>/examples
+</pre></div>
+</li>
+<li><p class="first">Response:</p>
+<pre class="literal-block">
+OK - Undeployed application at context path /examples
+</pre>
+</li>
+</ul>
+<p>如果应用不存在,则报错:</p>
+<pre class="literal-block">
+FAIL - No context exists for path /pengyao
+</pre>
+</div>
+<div class="section" id="section-10">
+<h3>部署应用</h3>
+<p>下载测试用例:</p>
+<blockquote>
+<div class="highlight"><pre><span></span>wget<span class="w"> </span>http://tomcat.apache.org/tomcat-6.0-doc/appdev/sample/sample.war<span class="w"> </span>-O<span class="w"> </span>/tmp/sample.war
+</pre></div>
+</blockquote>
+<p><strong>以PUT方式上传war包部署应用</strong></p>
+<ul>
+<li><p class="first">Request:</p>
+<div class="highlight"><pre><span></span>curl<span class="w"> </span>-u<span class="w"> </span>pengyao:pengyao_pass<span class="w"> </span>-T<span class="w"> </span>/tmp/sample.war<span class="w">  </span>http://127.0.0.1:8080/manager/text/deploy?path<span class="o">=</span>/sample
+</pre></div>
+</li>
+<li><p class="first">Response:</p>
+<pre class="literal-block">
+OK - Deployed application at context path /sample
+</pre>
+</li>
+</ul>
+<p>此时将能在${CATALINA_BASE}/webapps/下找到sample.war 及 sample目录</p>
+<p><strong>以本地(Tomcat Server本地)war包部署应用</strong></p>
+<ul>
+<li><p class="first">Request:</p>
+<div class="highlight"><pre><span></span>curl<span class="w"> </span>-u<span class="w"> </span>pengyao:pengyao_pass<span class="w"> </span><span class="s2">&quot;http://127.0.0.1:8080/manager/text/deploy?path=/foo&amp;war=file:/tmp/sample.war&quot;</span>
+</pre></div>
+</li>
+<li><p class="first">Response:</p>
+<pre class="literal-block">
+OK - Deployed application at context path /foo
+</pre>
+</li>
+</ul>
+<p>此时将能在${CATALINA_BASE}/webapps/下找到foo.war 及 foo目录</p>
+</div>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-12-26</p>
+    <p>Category: <a href="https://pengyao.org/category/webserver.html">WebServer</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/webserver.html">webserver</a>,      <a href="https://pengyao.org/tag/tomcat.html">tomcat</a>,      <a href="https://pengyao.org/tag/manager.html">manager</a>,      <a href="https://pengyao.org/tag/zi-fu-jie-kou.html">字符接口</a>,      <a href="https://pengyao.org/tag/api.html">api</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "tomcat-manager-text-api-test.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

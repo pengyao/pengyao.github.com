@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="saltstack, zeromq, zmq_filtering, envelopes">
+
+  <title>
+    PengYao's Weblog
+&ndash; Salt zmq_filtering测试  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/salt-zmq-filtering.html">Salt zmq_filtering测试</a></h3>
+  </div>
+  <div class="article_text">
+    <p>Salt 2014.7新增 <a class="reference external" href="https://github.com/saltstack/salt/pull/13285">zmq_filtering</a> 配置项, 基于zeromq PUB-SUB <a class="reference external" href="http://zguide.zeromq.org/page:all#Pub-Sub-Message-Envelopes">Envelopes</a> 技术,
+在Master端(publisher)进行message过滤(ZeroMQ 3.0+版本,之前版本是在subscriber端进行过滤), 以实现如果该指令只是少量主机执行的话,
+只将指令发送到匹配的Minion端, 而并非发送到所有的Minion端. 需要注意的是, 目前zmq_filtering只作用list target, 即使用-L来指定target.
+本文将对其进行功能及效果测试.</p>
+<div class="section" id="section-1">
+<h2>前置阅读</h2>
+<ul class="simple">
+<li>ZeroMQ PUB-SUB Message Envelopes: <a class="reference external" href="http://zguide.zeromq.org/page:all#Pub-Sub-Message-Envelopes">http://zguide.zeromq.org/page:all#Pub-Sub-Message-Envelopes</a></li>
+</ul>
+</div>
+<div class="section" id="section-2">
+<h2>环境说明</h2>
+<ul class="simple">
+<li>OS: CentOS 6.5 X86_64</li>
+<li>Salt: Master/Minion架构, 2014.7.1版本</li>
+</ul>
+</div>
+<div class="section" id="section-3">
+<h2>开工</h2>
+<div class="section" id="zmq-filtering">
+<h3>配置zmq_filtering</h3>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">zmq_filtering参数在Master端及Minion端均需要配置才能生效, 默认为False</p>
+</div>
+<p>Master端配置zmq_filtering</p>
+<div class="highlight"><pre><span></span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;zmq_filtering: True&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>/etc/salt/master
+service<span class="w"> </span>salt-master<span class="w"> </span>restart
+</pre></div>
+<p>Minion端配置zmq_filtering</p>
+<div class="highlight"><pre><span></span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;zmq_filtering: True&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>/etc/salt/minion
+service<span class="w"> </span>salt-minion<span class="w"> </span>restart
+</pre></div>
+<p>操作完毕后, Master进行test.ping测试</p>
+<div class="highlight"><pre><span></span>salt<span class="w"> </span><span class="s1">&#39;*&#39;</span><span class="w"> </span>test.ping
+</pre></div>
+<p>输出如下内容:</p>
+<pre class="literal-block">
+minion-02.example.com:
+    True
+minion-01.example.com:
+    True
+</pre>
+</div>
+<div class="section" id="zmq-filtering-1">
+<h3>测试zmq_filtering</h3>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">以下操作如非特别声明, 均在Master端进行</p>
+</div>
+<p>在Master端开启一个新的控制台, 使用tcpdump进行抓包</p>
+<div class="highlight"><pre><span></span>tcpdump<span class="w"> </span>-i<span class="w"> </span>eth0<span class="w"> </span>src<span class="w"> </span>port<span class="w"> </span><span class="m">4505</span>
+</pre></div>
+<p>使用Globbing target进行测试</p>
+<div class="highlight"><pre><span></span>salt<span class="w"> </span><span class="s1">&#39;minion-01.example.com&#39;</span><span class="w"> </span>test.ping
+</pre></div>
+<p>tcpdump抓包结果如下:</p>
+<pre class="literal-block">
+07:21:18.104954 IP salt-master.example.com.4505 &gt; salt-minion-01.example.com.58024: Flags [P.], seq 396:602, ack 1, win 227, options [nop,nop,TS val 4253627 ecr 4239803], length 206
+07:21:18.105190 IP salt-master.example.com.4505 &gt; salt-minion-02.example.com.33595: Flags [P.], seq 396:602, ack 1, win 227, options [nop,nop,TS val 4253627 ecr 4294907239], length 206
+</pre>
+<p>从结果来看, 虽然指定了minion-01.example.com, 因为Salt是PUB-SUB结构, 消息均会发送到所有的Minion</p>
+<p>使用List target进行测试</p>
+<div class="highlight"><pre><span></span>salt<span class="w"> </span>-L<span class="w"> </span><span class="s1">&#39;minion-01.example.com&#39;</span><span class="w"> </span>test.ping
+</pre></div>
+<p>tcpdump抓包结果如下:</p>
+<pre class="literal-block">
+07:23:35.378587 IP salt-master.example.com.4505 &gt; salt-minion-01.example.com.58024: Flags [P.], seq 602:839, ack 1, win 227, options [nop,nop,TS val 4390900 ecr 4245316], length 237
+</pre>
+<p>从结果看, 在Master进行了过滤, 虽然是PUB-SUB, 但消息只发送给了salt-minion-01.example.com, 并没有发送到其他Minion上, 达到了zmq_filtering的效果.</p>
+</div>
+<div class="section" id="zeromq-pub-sub-message-envelopes">
+<h3>测试ZeroMQ PUB-SUB Message Envelopes性能</h3>
+<p>开启zmq_filtering, 如果不是所有Minion均需要执行的操作, 通过在Master端进行消息过滤, 能够大大降低Master端发送指令时的带宽消耗, 那么zmq_filtering的性能又如何?</p>
+<p>由于zmq_filtering只是利用ZeroMQ的PUB-SUB Message Envelopes, 其性能测试个人觉得只需要测试ZeroMQ PUB/SUB即可. 因此就假设了如下极端场景:</p>
+<ul class="simple">
+<li>publisher 1节点, subscriber 1000节点(单节点开启1000个线程)</li>
+<li>进行1000次消息发送, 每条消息均需要发送到所有subscriber</li>
+</ul>
+<p>直接上代码:</p>
+<p><strong>publisher.py</strong></p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">zmq</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+
+<span class="k">def</span> <span class="nf">pub</span><span class="p">():</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span>
+    <span class="n">socket</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">PUB</span><span class="p">)</span>
+
+    <span class="n">socket</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;tcp://*:5556&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">context</span><span class="p">,</span> <span class="n">socket</span>
+
+<span class="k">def</span> <span class="nf">sub_ids</span><span class="p">(</span><span class="n">subs</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">sub_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">each_sub</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">subs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">each_sub</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="n">sub_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sub_list</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">broadcast</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">times</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">subs</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">context</span><span class="p">,</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">pub</span><span class="p">()</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tgt_type&#39;</span><span class="p">:</span> <span class="s1">&#39;glob&#39;</span><span class="p">,</span> <span class="s1">&#39;jid&#39;</span><span class="p">:</span> <span class="s1">&#39;20150106053023956920&#39;</span><span class="p">,</span> <span class="s1">&#39;tgt&#39;</span><span class="p">:</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;ret&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="s1">&#39;sudo_vagrant&#39;</span><span class="p">,</span> <span class="s1">&#39;arg&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;fun&#39;</span><span class="p">:</span> <span class="s1">&#39;test.ping&#39;</span><span class="p">}</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">broadcast</span><span class="p">:</span>
+        <span class="n">sub_list</span> <span class="o">=</span> <span class="n">sub_ids</span><span class="p">(</span><span class="n">subs</span><span class="o">=</span><span class="n">subs</span><span class="p">)</span>
+
+    <span class="c1"># sleep 30 seconds, guarantee all subscribes have  subscribed</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;regain consciousness&quot;</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">times</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">broadcast</span><span class="p">:</span>
+            <span class="n">socket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">each_sub</span> <span class="ow">in</span> <span class="n">sub_list</span><span class="p">:</span>
+               <span class="n">socket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">each_sub</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">zmq</span><span class="o">.</span><span class="n">SNDMORE</span><span class="p">)</span>
+               <span class="n">socket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+    <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;-------------------------------&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Exec times: </span><span class="si">%s</span><span class="s2">, Exec time: </span><span class="si">%d</span><span class="s2">ms&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">end_time</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">-</span> <span class="n">start_time</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">subs</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;unicast&#39;</span><span class="p">:</span>
+        <span class="n">broadcast</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">broadcast</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="nb">print</span> <span class="s2">&quot;broadcast subscriber: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">broadcast</span>
+    <span class="n">main</span><span class="p">(</span><span class="n">broadcast</span><span class="o">=</span><span class="n">broadcast</span><span class="p">,</span> <span class="n">times</span><span class="o">=</span><span class="n">times</span><span class="p">,</span> <span class="n">subs</span><span class="o">=</span><span class="n">subs</span><span class="p">)</span>
+</pre></div>
+<p><strong>subscriber.py</strong></p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">zmq</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+
+<span class="k">def</span> <span class="nf">sub</span><span class="p">(</span><span class="n">pub_uri</span><span class="p">,</span> <span class="n">times</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span>
+    <span class="n">socket</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUB</span><span class="p">)</span>
+    <span class="n">socket</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">pub_uri</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">idx</span><span class="p">:</span>
+        <span class="n">socket</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUBSCRIBE</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">socket</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUBSCRIBE</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">times</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">socket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+    <span class="n">socket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">subs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">times</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">broadcast</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">pub_uri</span> <span class="o">=</span> <span class="s1">&#39;tcp://salt-master.example.com:5556&#39;</span>
+    <span class="n">sub_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">each_sub</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">subs</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">broadcast</span><span class="p">:</span>
+            <span class="n">sub_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">pub_uri</span><span class="p">,),</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;times&#39;</span><span class="p">:</span> <span class="n">times</span><span class="p">}))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">each_sub</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="n">sub_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">pub_uri</span><span class="p">,),</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;times&#39;</span><span class="p">:</span> <span class="n">times</span><span class="p">,</span> <span class="s1">&#39;idx&#39;</span><span class="p">:</span> <span class="n">idx</span><span class="p">}))</span>
+    <span class="k">for</span> <span class="n">each_sub</span> <span class="ow">in</span> <span class="n">sub_list</span><span class="p">:</span>
+        <span class="n">each_sub</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="nb">print</span> <span class="s2">&quot;subscriber start ok&quot;</span>
+    <span class="k">for</span> <span class="n">each_sub</span> <span class="ow">in</span> <span class="n">sub_list</span><span class="p">:</span>
+        <span class="n">each_sub</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+    <span class="nb">print</span> <span class="s2">&quot;subscriber done&quot;</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">subs</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;unicast&#39;</span><span class="p">:</span>
+        <span class="n">broadcast</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">broadcast</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="nb">print</span> <span class="s2">&quot;broadcast subscriber: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">broadcast</span>
+    <span class="n">main</span><span class="p">(</span><span class="n">subs</span><span class="o">=</span><span class="n">subs</span><span class="p">,</span> <span class="n">times</span><span class="o">=</span><span class="n">times</span><span class="p">,</span> <span class="n">broadcast</span><span class="o">=</span><span class="n">broadcast</span><span class="p">)</span>
+</pre></div>
+<p><strong>测试用例1: 默认的PUB-SUB</strong></p>
+<div class="highlight"><pre><span></span>python<span class="w"> </span>publisher.py<span class="w">    </span><span class="c1"># 在Publisher(Master)端进行</span>
+python<span class="w"> </span>subscriber.py<span class="w">   </span><span class="c1"># 在Subcriber(Minion-01)端进行</span>
+</pre></div>
+<p>执行时间为 1588ms</p>
+<p><strong>测试用例2: 启用PUB-SUB Message Envelopes</strong></p>
+<div class="highlight"><pre><span></span>python<span class="w"> </span>publisher.py<span class="w"> </span>unicast<span class="w">   </span><span class="c1"># 在Publisher(Master)端进行</span>
+python<span class="w"> </span>subscriber.py<span class="w"> </span>unicast<span class="w">   </span><span class="c1"># 在Subcriber(Minion-01)端进行</span>
+</pre></div>
+<p>执行时间为 6786ms</p>
+<p>两者相差5s左右, 由于本次测试, 为极端情况(1000次且每次都需要发送到所有subscriber), 增加的成本在可承受范围之内.</p>
+</div>
+<div class="section" id="qa">
+<h3>QA</h3>
+<p><strong>Q: 如果只是单边启动zmq_filtering, 是否会影响使用?</strong></p>
+<p>A: 这里边有两种情况</p>
+<ul class="simple">
+<li>Master端配置了zmq_filtering, 对于没有配置zmq_filtering的Minion, 将像以前一样, master端依然会将消息发送给它(不管target是否匹配), 对于已经开启zmq_filtering的minion, 则如果list target不匹配, master则不会发送消息给它.</li>
+<li>Master没有配置zmq_filtering, 而Minion进行了配置, 则该Minion收不到任何指令</li>
+</ul>
+<p><strong>Q: zmq_filtering适用场景</strong></p>
+<p>A: 当前zmq_filtering只会匹配list target, 对于其他的target方式, 则采用默认的PUB-SUB. zmq_filtering适用于大规模集群, 但每次执行只是少数主机运行指令的场景.</p>
+</div>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2015-01-27</p>
+    <p>Category: <a href="https://pengyao.org/category/saltstack.html">SaltStack</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/saltstack.html">saltstack</a>,      <a href="https://pengyao.org/tag/zeromq.html">zeromq</a>,      <a href="https://pengyao.org/tag/zmq_filtering.html">zmq_filtering</a>,      <a href="https://pengyao.org/tag/envelopes.html">envelopes</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "salt-zmq-filtering.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

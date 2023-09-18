@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="saltstack, howto, LVS, Linux Vritual Server, 配置管理">
+
+  <title>
+    PengYao's Weblog
+&ndash; 基于SaltStack完成LVS的配置管理  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/howto_configure_linux_virtual_server_using_saltstack.html">基于SaltStack完成LVS的配置管理</a></h3>
+  </div>
+  <div class="article_text">
+    <p>之前由于工作需求，编写了SaltStack的 <a class="reference external" href="https://github.com/pengyao/salt/blob/develop/salt/modules/lvs.py">LVS远程执行模块</a>  , <a class="reference external" href="https://github.com/pengyao/salt/blob/develop/salt/states/lvs_service.py">LVS service状态管理模块</a> 及 <a class="reference external" href="https://github.com/pengyao/salt/blob/develop/salt/states/lvs_server.py">LVS server状态管理模块</a> ,并 <a class="reference external" href="https://github.com/saltstack/salt/pull/8741">提交给了SaltStack官方</a>,现已合并至官方代码中，本文将描述如何基于SaltStack完成LVS Loadblance(DR)及RealServer的配置管理.</p>
+<div class="section" id="section-1">
+<h2>前置阅读</h2>
+<ul class="simple">
+<li><a class="reference external" href="http://blog.csdn.net/justlinux2010/article/details/8539205">LVS-DR模式配置详解</a> ,需要注意的是，LVS-DR方式工作在数据链路层，文中描述需要开启ip_forward,其实没有必要, 详情见 <a class="reference external" href="http://zh.linuxvirtualserver.org/node/2585">LVS DR模式原理剖析</a></li>
+</ul>
+</div>
+<div class="section" id="section-2">
+<h2>环境说明</h2>
+<ul class="simple">
+<li>三台服务器用于LVS集群，其中主机名为lvs的担当的角色为loadblance，对应的IP地址为192.168.36.10；主机名为web-01和web-02的主机担当的角色为RealServer, 对应的IP地址分别为192.168.36.11及192.168.36.12</li>
+<li>LVS VIP: 192.168.36.33, Port: 80, VIP绑定在lvs的eth1口</li>
+<li>最最重要的是loadblance主机为Linux，并已安装ipvsadm, Windows/Unix等主机的同学请绕过吧，这不是我的错......</li>
+</ul>
+</div>
+<div class="section" id="section-3">
+<h2>开工</h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">以下所有操作均在Master上进行</p>
+</div>
+<div class="section" id="saltstack-lvs">
+<h3>配置SaltStack LVS模块</h3>
+<ul class="simple">
+<li>如果使用的Salt版本已经包含了lvs模块，请忽略本节内容，测试方法:</li>
+</ul>
+<div class="highlight"><pre><span></span>salt<span class="w"> </span><span class="s1">&#39;lvs&#39;</span><span class="w"> </span>cmd.run<span class="w"> </span><span class="s2">&quot;python -c &#39;import salt.modules.lvs&#39;&quot;</span>
+</pre></div>
+<p>如果输出有 <em>ImportError</em> 字样，则表示模块没有安装，需要进行如下操作:</p>
+<div class="highlight"><pre><span></span><span class="nb">test</span><span class="w"> </span>-d<span class="w"> </span>/srv/salt/_modules<span class="w"> </span><span class="o">||</span><span class="w"> </span>mkdir<span class="w"> </span>/srv/salt/_modules
+<span class="nb">test</span><span class="w"> </span>-d<span class="w"> </span>/srv/salt/_states<span class="w"> </span><span class="o">||</span><span class="w"> </span>mkdir<span class="w"> </span>/srv/salt/_states
+wget<span class="w"> </span>https://raw.github.com/saltstack/salt/develop/salt/modules/lvs.py<span class="w"> </span>-O<span class="w"> </span>/srv/salt/_modules/lvs.py
+wget<span class="w"> </span>https://raw.github.com/saltstack/salt/develop/salt/states/lvs_service.py<span class="w"> </span>-O<span class="w"> </span>/srv/salt/_states/lvs_service.py
+wget<span class="w"> </span>https://raw.github.com/saltstack/salt/develop/salt/states/lvs_server.py<span class="w"> </span>-O<span class="w"> </span>/srv/salt/_states/lvs_server.py
+</pre></div>
+</div>
+<div class="section" id="pillar">
+<h3>配置pillar</h3>
+<p><em>/srv/pillar/lvs/loadblance.sls</em></p>
+<div class="highlight"><pre><span></span><span class="nt">lvs-loadblance</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lvstest</span>
+<span class="w">    </span><span class="nt">vip</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.36.33</span>
+<span class="w">    </span><span class="nt">vip-nic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eth1</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tcp</span>
+<span class="w">    </span><span class="nt">scheduler</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wlc</span>
+<span class="w">    </span><span class="nt">realservers</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web-01</span>
+<span class="w">        </span><span class="nt">ip</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.36.11</span>
+<span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">        </span><span class="nt">packet_forward_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr</span>
+<span class="w">        </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web-02</span>
+<span class="w">        </span><span class="nt">ip</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.36.12</span>
+<span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">        </span><span class="nt">packet_forward_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr</span>
+<span class="w">        </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+</pre></div>
+<p><em>/srv/pillar/lvs/realserver.sls</em></p>
+<div class="highlight"><pre><span></span><span class="nt">lvs-realserver</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lvstest</span>
+<span class="w">    </span><span class="nt">vip</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.36.33</span>
+</pre></div>
+<p><em>/srv/pillar/top.sls</em></p>
+<div class="highlight"><pre><span></span><span class="nt">base</span><span class="p">:</span>
+<span class="w">  </span><span class="s">&#39;lvs&#39;</span><span class="p p-Indicator">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lvs.loadblance</span>
+<span class="w">  </span><span class="s">&#39;web-0*&#39;</span><span class="p p-Indicator">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lvs.realserver</span>
+</pre></div>
+</div>
+<div class="section" id="states">
+<h3>编写States</h3>
+<p><em>/srv/salt/lvs/loadblance.sls</em></p>
+<div class="highlight"><pre><span></span><span class="x"># config lvs</span>
+<span class="cp">{%</span> <span class="k">if</span> <span class="s1">&#39;lvs-loadblance&#39;</span> <span class="k">in</span> <span class="nv">pillar</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">each_lvs</span> <span class="k">in</span> <span class="nv">pillar</span><span class="o">[</span><span class="s1">&#39;lvs-loadblance&#39;</span><span class="o">]</span> <span class="cp">%}</span>
+<span class="x"># config lvs vip</span>
+<span class="cp">{{</span><span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;name&#39;</span><span class="o">]</span><span class="cp">}}</span><span class="x">-vip:</span>
+<span class="x">  network.managed:</span>
+<span class="x">    - name: </span><span class="cp">{{</span><span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;vip-nic&#39;</span><span class="o">]</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;name&#39;</span><span class="o">]</span><span class="cp">}}</span>
+<span class="x">    - enable: True</span>
+<span class="x">    - type: eth</span>
+<span class="x">    - proto: none</span>
+<span class="x">    - ipaddr: </span><span class="cp">{{</span><span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;vip&#39;</span><span class="o">]</span><span class="cp">}}</span>
+<span class="x">    - netmask: 255.255.255.255</span>
+
+<span class="cp">{%</span> <span class="k">set</span> <span class="nv">service_address</span> <span class="o">=</span> <span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;vip&#39;</span><span class="o">]</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;port&#39;</span><span class="o">]|</span><span class="nf">string</span><span class="o">()</span> <span class="cp">%}</span>
+<span class="cp">{{</span><span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;name&#39;</span><span class="o">]</span><span class="cp">}}</span><span class="x">-service:</span>
+<span class="x">  lvs_service.present:</span>
+<span class="x">    - protocol: </span><span class="cp">{{</span><span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;protocol&#39;</span><span class="o">]</span><span class="cp">}}</span>
+<span class="x">    - service_address: </span><span class="cp">{{</span><span class="nv">service_address</span><span class="cp">}}</span>
+<span class="x">    - scheduler: </span><span class="cp">{{</span><span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;scheduler&#39;</span><span class="o">]</span><span class="cp">}}</span>
+
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">each_rs</span> <span class="k">in</span> <span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;realservers&#39;</span><span class="o">]</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">set</span> <span class="nv">server_address</span> <span class="o">=</span> <span class="nv">each_rs</span><span class="o">[</span><span class="s1">&#39;ip&#39;</span><span class="o">]</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="nv">each_rs</span><span class="o">[</span><span class="s1">&#39;port&#39;</span><span class="o">]|</span><span class="nf">string</span><span class="o">()</span> <span class="cp">%}</span>
+<span class="cp">{{</span><span class="nv">each_rs</span><span class="o">[</span><span class="s1">&#39;name&#39;</span><span class="o">]</span><span class="cp">}}</span><span class="x">-server:</span>
+<span class="x">  lvs_server.present:</span>
+<span class="x">    - protocol: </span><span class="cp">{{</span><span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;protocol&#39;</span><span class="o">]</span><span class="cp">}}</span>
+<span class="x">    - service_address: </span><span class="cp">{{</span><span class="nv">service_address</span><span class="cp">}}</span>
+<span class="x">    - server_address: </span><span class="cp">{{</span><span class="nv">server_address</span><span class="cp">}}</span>
+<span class="x">    - packet_forward_method: </span><span class="cp">{{</span><span class="nv">each_rs</span><span class="o">[</span><span class="s1">&#39;packet_forward_method&#39;</span><span class="o">]</span><span class="cp">}}</span>
+<span class="x">    - weight: </span><span class="cp">{{</span><span class="nv">each_rs</span><span class="o">[</span><span class="s1">&#39;weight&#39;</span><span class="o">]</span><span class="cp">}}</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+</pre></div>
+<p><em>/srv/salt/lvs/realserver.sls</em></p>
+<div class="highlight"><pre><span></span><span class="x"># ignore arp</span>
+<span class="x">net.ipv4.conf.all.arp_ignore:</span>
+<span class="x">  sysctl.present:</span>
+<span class="x">    - value: 1</span>
+
+<span class="x">net.ipv4.conf.lo.arp_ignore:</span>
+<span class="x">  sysctl.present:</span>
+<span class="x">    - value: 1</span>
+
+<span class="x">net.ipv4.conf.all.arp_announce:</span>
+<span class="x">  sysctl.present:</span>
+<span class="x">    - value: 2</span>
+
+<span class="x">net.ipv4.conf.lo.arp_announce:</span>
+<span class="x">  sysctl.present:</span>
+<span class="x">    - value: 2</span>
+
+
+<span class="x"># config lvs vip</span>
+<span class="cp">{%</span> <span class="k">if</span> <span class="s1">&#39;lvs-realserver&#39;</span> <span class="k">in</span> <span class="nv">pillar</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">each_lvs</span> <span class="k">in</span> <span class="nv">pillar</span><span class="o">[</span><span class="s1">&#39;lvs-realserver&#39;</span><span class="o">]</span> <span class="cp">%}</span>
+<span class="x">lvs-vip:</span>
+<span class="x">  network.managed:</span>
+<span class="x">    - name: </span><span class="cp">{{</span><span class="s2">&quot;lo&quot;</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;name&#39;</span><span class="o">]</span><span class="cp">}}</span>
+<span class="x">    - enable: True</span>
+<span class="x">    - type: eth</span>
+<span class="x">    - proto: none</span>
+<span class="x">    - ipaddr: </span><span class="cp">{{</span><span class="nv">each_lvs</span><span class="o">[</span><span class="s1">&#39;vip&#39;</span><span class="o">]</span><span class="cp">}}</span>
+<span class="x">    - netmask: 255.255.255.255</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+</pre></div>
+<ul class="simple">
+<li>/srv/salt/top.sls*</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="nt">base</span><span class="p">:</span>
+<span class="w">  </span><span class="s">&#39;lvs&#39;</span><span class="p p-Indicator">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lvs.loadblance</span>
+<span class="w">  </span><span class="s">&#39;web-0*&#39;</span><span class="p p-Indicator">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lvs.realserver</span>
+</pre></div>
+</div>
+<div class="section" id="section-4">
+<h3>应用配置</h3>
+<p>如果之前进行 <em>配置LVS模块</em> 的操作，需要进行同步模块的操作:</p>
+<div class="highlight"><pre><span></span>salt<span class="w"> </span><span class="s1">&#39;lvs*&#39;</span><span class="w"> </span>saltutil.sync_all
+</pre></div>
+<p>应用LVS配置:</p>
+<div class="highlight"><pre><span></span>salt<span class="w"> </span><span class="s1">&#39;*&#39;</span><span class="w"> </span>state.highstate
+</pre></div>
+<p>查看LVS当前状态:</p>
+<div class="highlight"><pre><span></span>salt<span class="w"> </span><span class="s1">&#39;lvs&#39;</span><span class="w"> </span>lvs.list
+</pre></div>
+</div>
+<div class="section" id="section-5">
+<h3>总结</h3>
+<p>通过SaltStack LVS模块，可以快速的查询LVS状态，执行LVS常用指令及完成LVS的配置管理。如有需要调整RealServer规则或添加新的RealServer, 只需要修改 <em>/srv/pillar/lvs/loadblance.sls</em> ，然后应用配置即可.</p>
+<p>本文中所用到的代码已经上传至github，传送门: <a class="reference external" href="https://github.com/pengyao/salt-lvs">https://github.com/pengyao/salt-lvs</a></p>
+</div>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-11-24</p>
+    <p>Category: <a href="https://pengyao.org/category/saltstack.html">SaltStack</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/saltstack.html">saltstack</a>,      <a href="https://pengyao.org/tag/howto.html">howto</a>,      <a href="https://pengyao.org/tag/lvs.html">LVS</a>,      <a href="https://pengyao.org/tag/linux-vritual-server.html">Linux Vritual Server</a>,      <a href="https://pengyao.org/tag/pei-zhi-guan-li.html">配置管理</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "howto_configure_linux_virtual_server_using_saltstack.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

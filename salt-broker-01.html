@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="saltstack, zeromq, syndic, salt-broker">
+
+  <title>
+    PengYao's Weblog
+&ndash; salt-broker: 轻量级的Salt Proxy解决方案  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/salt-broker-01.html">salt-broker: 轻量级的Salt Proxy解决方案</a></h3>
+  </div>
+  <div class="article_text">
+    <div class="section" id="section-1">
+<h2>基本简介</h2>
+<p>当前运维系统底层采用 <a class="reference external" href="https://github.com/saltstack/salt">Salt</a> 进行实现, 由于节点分布在全国各地, 存在南北通畅问题, 为了解决这个问题, 之前采用了 <a class="reference external" href="http://docs.saltstack.com/en/latest/topics/topology/syndic.html">Syndic</a> 方案, 在实际使用中发现由于Syndic采用分治机制, 弱化了MasterOfMaster, 在某些网络状况较差的情况下, 会让结果变得不可控. 为了解决该问题, 借鉴ZeroMQ文档, 开发了轻量的Salt Proxy解决方案 <a class="reference external" href="https://github.com/pengyao/salt-broker">salt-broker</a></p>
+</div>
+<div class="section" id="section-2">
+<h2>前置阅读</h2>
+<ul class="simple">
+<li><a class="reference external" href="http://zguide.zeromq.org/page:all#Chapter-Sockets-and-Patterns">0MQ - The Guide: Sockets and Patterns</a></li>
+<li><a class="reference external" href="http://pengyao.org/salt-zeromq-01.html">Salt中ZeroMQ那点事</a></li>
+<li><a class="reference external" href="http://pengyao.org/salt-syndic-01.html">Salt中Syndic那点事</a></li>
+</ul>
+</div>
+<div class="section" id="section-3">
+<h2>环境说明</h2>
+<ul class="simple">
+<li>CentOS6.4</li>
+<li>Salt <a class="reference external" href="https://github.com/saltstack/salt/tree/v2014.1.10/salt">2014.1.10</a> ,默认配置</li>
+<li>由于本文为原理解析, 所以采用的代码为最初版的代码, 只描述了其功能逻辑</li>
+</ul>
+</div>
+<div class="section" id="salt-broker">
+<h2>为什么会有salt-broker?</h2>
+<p>因为采用Syndic, 在网络链路不好的情况下, syndic架构将变得不可控. 详情请访问 <a class="reference external" href="http://pengyao.org/salt-syndic-01.html">Salt中Syndic那点事</a></p>
+<p>而由于业务系统采用Salt作为中心调度, 结果不可控将变得非常糟糕. 尝试在syndic基础上进行修改, 没有达到预期. 分析了需求, 其实自己需要的是一个强中心, 轻量级的Salt Proxy解决方案, 所以就有了 <a class="reference external" href="https://github.com/pengyao/salt-broker">salt-broker</a> .</p>
+</div>
+<div class="section" id="salt-broker-1">
+<h2>salt-broker是什么?</h2>
+<p>salt-broker是轻量级的Salt proxy解决方案, 只做数据转发, 不做额外的处理. 其工作原理如下:</p>
+<div class="section" id="pub-broker">
+<h3>PUB Broker</h3>
+<p>在Master/Minions结构中, 命令分发采用ZeroMQ PUB/SUB模式, 如下图:</p>
+<img alt="" src="https://raw.githubusercontent.com/imatix/zguide/master/images/fig4.png" />
+<p>salt-broker中的PUB Broker在中间增加了Forwarder Proxy层, 使架构变成如下:</p>
+<img alt="" src="https://raw.githubusercontent.com/imatix/zguide/master/images/fig18.png" />
+<p>对应代码如下:</p>
+<div class="highlight"><pre><span></span><span class="n">master_pub</span> <span class="o">=</span> <span class="s2">&quot;tcp://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">master_ip</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pub_port</span><span class="p">)</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span>
+<span class="n">frontend</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUB</span><span class="p">)</span>
+<span class="n">frontend</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">master_pub</span><span class="p">)</span>
+<span class="n">backend</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">PUB</span><span class="p">)</span>
+<span class="n">backend</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;tcp://0.0.0.0:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">pub_port</span><span class="p">)</span>
+<span class="n">frontend</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUBSCRIBE</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">frontend</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
+    <span class="n">backend</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+</pre></div>
+<p>本地建立PUB接口, 并连接Master的SUB接口, 订阅来自于Master的消息, 接收到后立马发送到本地的PUB接口. 由于Minions上指定的Master地址为salt-broker所在的地址, 所以Minions能够接受到该消息.</p>
+</div>
+<div class="section" id="ret-broker">
+<h3>Ret Broker</h3>
+<p>在Master/Minions结构中, 认证,文件服务,结果收集等采用ZeroMQ ROUTER/REQ模式, 如下图:</p>
+<img alt="" src="https://raw.githubusercontent.com/imatix/zguide/master/images/fig20.png" />
+<p>salt-broker中的Ret Broker在原来的REQ/ROUTER之间再增加了一层ROUTER/DEALER Proxy层. 对应的代码如下:</p>
+<div class="highlight"><pre><span></span><span class="n">master_ret</span> <span class="o">=</span> <span class="s2">&quot;tcp://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">master_ip</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ret_port</span><span class="p">)</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span>
+<span class="n">frontend</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">ROUTER</span><span class="p">)</span>
+<span class="n">frontend</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;tcp://0.0.0.0:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">ret_port</span><span class="p">)</span>
+<span class="n">backend</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">DEALER</span><span class="p">)</span>
+<span class="n">backend</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">master_ret</span><span class="p">)</span>
+<span class="n">zmq</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">QUEUE</span><span class="p">,</span> <span class="n">frontend</span><span class="p">,</span> <span class="n">backend</span><span class="p">)</span>
+</pre></div>
+<p>本地建立ROUTER接口, 接收来自于Minions的REQ请求; 同时本地建立DEALER接口, 连接Master的Router接口, 将接收到的数据发送给远端的Master ROUTER接口.</p>
+</div>
+<div class="section" id="broker-vs-syndic">
+<h3>Broker VS Syndic</h3>
+<p>salt-broker与syndic一样, 都支持多层级架构. salt-broker相对于syndic, 更为轻量级, 只做数据转发. 在超大规模场景下, salt-broker并不能有效的降低master的压力, 而syndic能够降低.</p>
+<p>syndic本地会维护auth及文件服务系统, 而broker会将所有请求转发给Master, 即所有的Minions的最终管理都是在Master上. 由于所有管理权均在Master上, salt-broker能够解决掉之前Syndic在网络不稳定时的不可控问题.</p>
+</div>
+</div>
+<div class="section" id="salt-broker-2">
+<h2>如何使用salt-broker?</h2>
+<div class="section" id="section-4">
+<h3>全新安装</h3>
+<ol class="arabic simple">
+<li>安装salt(需提前配置EPEL)</li>
+</ol>
+<div class="highlight"><pre><span></span>yum<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>salt
+</pre></div>
+<ol class="arabic simple" start="2">
+<li>安装salt-broker</li>
+</ol>
+<div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>salt-broker
+wget<span class="w"> </span>https://raw.githubusercontent.com/pengyao/salt-broker/master/pkg/rpm/salt-broker<span class="w"> </span>-O<span class="w"> </span>/etc/rc.d/init.d/salt-broker
+chmod<span class="w"> </span>+x<span class="w"> </span>/etc/rc.d/init.d/salt-broker
+</pre></div>
+<ol class="arabic simple" start="3">
+<li>配置salt-broker</li>
+</ol>
+<p><em>/etc/salt/broker</em></p>
+<div class="highlight"><pre><span></span><span class="nt">master</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">master_ip</span>
+</pre></div>
+<ol class="arabic simple" start="4">
+<li>启动salt-broker</li>
+</ol>
+<div class="highlight"><pre><span></span>service<span class="w"> </span>salt-broker<span class="w"> </span>start
+chkconfig<span class="w"> </span>salt-broker<span class="w"> </span>on
+</pre></div>
+<ol class="arabic simple" start="5">
+<li>启动完毕后, 需要将minions配置文件中的master配置为salt-broker所在的主机, 同时重启minions服务</li>
+<li>在Master接收minions的key(如果之前已accept, 无需操作本步骤)</li>
+</ol>
+</div>
+<div class="section" id="syndic">
+<h3>在Syndic主机上安装</h3>
+<ol class="arabic simple">
+<li>关于Syndic主机上的syndic及master服务</li>
+</ol>
+<div class="highlight"><pre><span></span>service<span class="w"> </span>salt-syndic<span class="w"> </span>stop
+service<span class="w"> </span>salt-master<span class="w"> </span>stop
+chkconfig<span class="w"> </span>salt-syndic<span class="w"> </span>off
+chkconfig<span class="w"> </span>salt-master<span class="w"> </span>off
+</pre></div>
+<ol class="arabic simple" start="2">
+<li>安装salt-broker</li>
+</ol>
+<div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>salt-broker
+wget<span class="w"> </span>https://raw.githubusercontent.com/pengyao/salt-broker/master/pkg/rpm/salt-broker<span class="w"> </span>-O<span class="w"> </span>/etc/rc.d/init.d/salt-broker
+chmod<span class="w"> </span>+x<span class="w"> </span>/etc/rc.d/init.d/salt-broker
+</pre></div>
+<ol class="arabic simple" start="3">
+<li>配置salt-broker</li>
+</ol>
+<p><em>/etc/salt/broker</em></p>
+<div class="highlight"><pre><span></span><span class="nt">master</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">master_ip</span>
+</pre></div>
+<ol class="arabic simple" start="4">
+<li>启动salt-broker</li>
+</ol>
+<div class="highlight"><pre><span></span>service<span class="w"> </span>salt-broker<span class="w"> </span>start
+chkconfig<span class="w"> </span>salt-broker
+</pre></div>
+<ol class="arabic simple" start="5">
+<li>启动完毕后, 需要将原syndic下的minions配置文件中的master配置为salt-broker所在的主机, 并将/etc/salt/pki/minion/minion_master.pub删掉, 然后重启minion服务</li>
+<li>在Master接收minions的key(如果之前已accept, 无需操作本步骤)</li>
+</ol>
+</div>
+<div class="section" id="section-5">
+<h3>其他注意事项</h3>
+<p>默认配置中, 使用的是pub(4505)及ret(4506)端口, 如果master端口并非该端口, 需要在/etc/salt/broker配置文件中增加:</p>
+<div class="highlight"><pre><span></span><span class="nt">ret_port</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;new_ret_port&#39;</span>
+<span class="nt">publish_port</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;new_publish_port&#39;</span>
+</pre></div>
+<p>更改后并重启salt-broker服务.</p>
+</div>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2014-09-07</p>
+    <p>Category: <a href="https://pengyao.org/category/saltstack.html">SaltStack</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/saltstack.html">saltstack</a>,      <a href="https://pengyao.org/tag/zeromq.html">zeromq</a>,      <a href="https://pengyao.org/tag/syndic.html">syndic</a>,      <a href="https://pengyao.org/tag/salt-broker.html">salt-broker</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "salt-broker-01.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+
+  <title>
+    PengYao's Weblog
+&ndash; Tag: syndic  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+&gt; Tag: syndic
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/salt-broker-01.html">salt-broker: 轻量级的Salt Proxy解决方案</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last">当前运维系统底层采用 <a class="reference external" href="https://github.com/saltstack/salt">Salt</a> 进行实现, 由于节点分布在全国各地, 存在南北通畅问题, 为了解决这个问题, 之前采用了 <a class="reference external" href="http://docs.saltstack.com/en/latest/topics/topology/syndic.html">Syndic</a> 方案, 在实际使用中发现由于Syndic采用分治机制, 弱化了MasterOfMaster, 在某些网络状况较差的情况下, 会让结果变得不可控. 为了解决该问题, 借鉴ZeroMQ文档, 开发了轻量的Salt Proxy解决方案 <a class="reference external" href="https://github.com/pengyao/salt-broker">salt-broker</a></p>
+
+  </div>
+</article>
+<hr />
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/salt-syndic-01.html">Salt中Syndic那点事</a></h3>
+  </div>
+  <div class="article_text">
+    <p class="first last"><a class="reference external" href="https://github.com/saltstack/salt">Salt</a> 在 <a class="reference external" href="http://docs.saltstack.com/en/latest/topics/releases/0.9.0.html">0.9.0版本</a> 中增加了 <a class="reference external" href="http://docs.saltstack.com/en/latest/topics/topology/syndic.html">Syndic</a> 特性. 通过Syndic, 可以快速构建出多层级的Salt拓扑, 使Salt变得更灵活. 那么Syndic是如何工作的? 当前有哪些优势和局限哪?</p>
+
+  </div>
+</article>
+
+<footer>
+<div id="paginator">
+
+</div>
+</footer>
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="CentOS, EPEL, World Community Grid, 世界公共网格, boinc">
+
+  <title>
+    PengYao's Weblog
+&ndash; CentOS平台上如何加入World Community Grid参与运算  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/howto_join_world_community_grid_on_centos.html">CentOS平台上如何加入World Community Grid参与运算</a></h3>
+  </div>
+  <div class="article_text">
+    <p><a class="reference external" href="http://www.wikipedia.org/">Wikipedia</a> 对 <a class="reference external" href="http://zh.wikipedia.org/wiki/%E4%B8%96%E7%95%8C%E5%85%AC%E5%85%B1%E7%BD%91%E6%A0%BC">World Communtiy Grid</a> 有如下描述:</p>
+<pre class="literal-block">
+World Community Grid，中文译名为“世界社群网格”、“世界共同体网格计划”或“世界公共网格”。是由IBM公司主持的一项基于互联网的公益性分布式计算项目，开始于2004年11月16日。该项目将联合分布于世界各地的志愿者们提供的计算资源，用于一些能为全人类带来福音的大型科学研究项目。
+
+World Community Grid 创立之初是基于 Grid.org 的平台搭建的，之后于 2007 年开始全面迁移至开源的 BOINC 平台。World Community Grid 在底层计算平台的基础上，为具体的计算项目提供了一个更高层次的计算平台。
+</pre>
+<p>如果手头刚好有空闲的计算资源, 只需要安装上 <a class="reference external" href="http://boinc.berkeley.edu/">Boinc</a> client，进行简单的配置即可参与计算，贡献自己的一份力量,本文以 <a class="reference external" href="http://www.centos.org/">CentOS</a> 为例进行说明。</p>
+<div class="section" id="world-community-grid">
+<h2>注册World Community Grid账户</h2>
+<p>访问 <a class="reference external" href="https://secure.worldcommunitygrid.org/reg/viewRegister.do">World Community Grid 注册URL</a> 进行账户注册。注册完毕后，可以在 <em>settings</em> 中设置参与哪些项目的运算，并在My Profile页面获取到 <em>Weak Account Key</em>.</p>
+</div>
+<div class="section" id="boinc-client">
+<h2>安装配置Boinc Client</h2>
+<p><a class="reference external" href="http://fedoraproject.org/wiki/EPEL/zh-cn">EPEL</a> 中已经有了 <a class="reference external" href="http://boinc.berkeley.edu/">Boinc</a> client软件包，直接进行安装。如果你还没有安装EPEL，请在进行以下操作前先进行EPEL的安装。</p>
+<p><strong>安装boinc-client</strong></p>
+<div class="highlight"><pre><span></span>yum<span class="w"> </span>install<span class="w"> </span>boinc-client
+</pre></div>
+<p><strong>配置boinc-client</strong></p>
+<div class="highlight"><pre><span></span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;BOINCOPTS=&quot;--daemon --attach_project www.worldcommunitygrid.org/ weak_account_key&quot;&#39;</span><span class="w"> </span>&gt;&gt;/etc/sysconfig/boinc-client
+</pre></div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">请将命令中的 <em>weak_account_key</em> 替换为之前在My Profile页面获取到的 <em>Weak Account Key</em></p>
+</div>
+<p><strong>启动boinc-client</strong></p>
+<div class="highlight"><pre><span></span>chkconfig<span class="w"> </span>boinc-client<span class="w"> </span>on
+service<span class="w"> </span>boinc-client<span class="w"> </span>start
+</pre></div>
+</div>
+<div class="section" id="section-1">
+<h2>查看已参与运算的设备信息</h2>
+<p>安装配置boinc-client并运行后，访问 <a class="reference external" href="http://www.worldcommunitygrid.org/">World Community Grid</a> 的 <a class="reference external" href="https://secure.worldcommunitygrid.org/ms/device/viewDevices.do">Device Manager</a> 即可查询到当前已参与运算的设备信息。</p>
+<p>Technology solving problems!</p>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-12-10</p>
+    <p>Category: <a href="https://pengyao.org/category/public_welfare.html">Public_Welfare</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/centos.html">CentOS</a>,      <a href="https://pengyao.org/tag/epel.html">EPEL</a>,      <a href="https://pengyao.org/tag/world-community-grid.html">World Community Grid</a>,      <a href="https://pengyao.org/tag/shi-jie-gong-gong-wang-ge.html">世界公共网格</a>,      <a href="https://pengyao.org/tag/boinc.html">boinc</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "howto_join_world_community_grid_on_centos.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

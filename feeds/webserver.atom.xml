@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>PengYao's Weblog - WebServer</title><link href="https://pengyao.org/" rel="alternate"></link><link href="https://pengyao.org/feeds/webserver.atom.xml" rel="self"></link><id>https://pengyao.org/</id><updated>2013-12-26T00:00:00+08:00</updated><entry><title>Tomcat Manager Text API测试</title><link href="https://pengyao.org/tomcat-manager-text-api-test.html" rel="alternate"></link><published>2013-12-26T00:00:00+08:00</published><updated>2013-12-26T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-12-26:/tomcat-manager-text-api-test.html</id><summary type="html">&lt;p class="first last"&gt;Tomcat Manager提供应用的状态查询,部署,维护等功能. 同时提供有Text API接口,对其进行基本测试.&lt;/p&gt;
+</summary><content type="html">&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;基本介绍&lt;/h2&gt;
+&lt;p&gt;Tomcat Manager提供应用的状态查询, 部署, 维护等功能,  使用方法请参考: &lt;a class="reference external" href="http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html"&gt;Tomcat Manager HowTo&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;对Tomcat Manager的Text接口进行了测试, 附上测试用例及结果分析&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-2"&gt;
+&lt;h2&gt;环境说明&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Tomcat: 7.0.49&lt;/li&gt;
+&lt;li&gt;Manager URL: &lt;a class="reference external" href="http://127.0.0.1:8080/manager/"&gt;http://127.0.0.1:8080/manager/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;测试工具: curl&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="manager"&gt;
+&lt;h2&gt;manager访问控制配置&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;${CATALINA_BASE}/conf/tomcat-users.xml&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;......
+&lt;span class="nt"&gt;&amp;lt;tomcat-users&amp;gt;&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="nt"&gt;&amp;lt;user&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="na"&gt;username=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;pengyao&amp;quot;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="na"&gt;password=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;pengyao_pass&amp;quot;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="na"&gt;roles=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;manager-script&amp;quot;&lt;/span&gt;&lt;span class="nt"&gt;/&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;/tomcat-users&amp;gt;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;${CATALINA_BASE}/conf/Catalina/localhost/manager.xml&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nt"&gt;&amp;lt;Context&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="na"&gt;privileged=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;true&amp;quot;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="na"&gt;antiResourceLocking=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;false&amp;quot;&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="na"&gt;docBase=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;${catalina.home}/webapps/manager&amp;quot;&lt;/span&gt;&lt;span class="nt"&gt;&amp;gt;&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="nt"&gt;&amp;lt;Valve&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="na"&gt;className=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;org.apache.catalina.valves.RemoteAddrValve&amp;quot;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="na"&gt;allow=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;127.0.0.1&amp;quot;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;/&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;/Context&amp;gt;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;配置完成后需要重启Tomcat&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-3"&gt;
+&lt;h2&gt;测试&lt;/h2&gt;
+&lt;div class="section" id="section-4"&gt;
+&lt;h3&gt;查询服务信息&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;Request:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;pengyao:pengyao_pass&lt;span class="w"&gt; &lt;/span&gt;http://127.0.0.1:8080/manager/text/serverinfo
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Response:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+OK - Server info
+Tomcat Version: Apache Tomcat/7.0.47
+OS Name: Linux
+OS Version: 2.6.32-358.11.1.el6.x86_64
+OS Architecture: amd64
+JVM Version: 1.6.0_45-b06
+JVM Vendor: Sun Microsystems Inc.
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-5"&gt;
+&lt;h3&gt;获取当前已部署应用列表&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;Request:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;pengyao:pengyao_pass&lt;span class="w"&gt; &lt;/span&gt;http://127.0.0.1:8080/manager/text/list
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Response:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+OK - Listed applications for virtual host localhost
+/:running:0:ROOT
+/manager:running:6:manager
+/docs:running:0:docs
+/examples:running:0:examples
+/host-manager:running:0:host-manager
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;结果以冒号做分隔, 第一列为context path, 第二列为当前应用的状态, 第三列为当前活跃的session数, 第四列为appBase&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="sessionssessions"&gt;
+&lt;h3&gt;获取应用sessions设置及当前sessions&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;Request:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;pengyao:pengyao_pass&lt;span class="w"&gt; &lt;/span&gt;http://127.0.0.1:8080/manager/text/sessions?path&lt;span class="o"&gt;=&lt;/span&gt;/manager
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Response:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+OK - Session information for application at context path /manager
+Default maximum session inactive interval 30 minutes
+24 - &amp;lt;25 minutes: 1 sessions
+26 - &amp;lt;27 minutes: 1 sessions
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-6"&gt;
+&lt;h3&gt;启动应用&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;Request:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;pengyao:pengyao_pass&lt;span class="w"&gt; &lt;/span&gt;http://127.0.0.1:8080/manager/text/start?path&lt;span class="o"&gt;=&lt;/span&gt;/examples
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Response:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+OK - Started application at context path /examples
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果指定的path(context path)不存在, 则报错:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+FAIL - No context exists for path /pengyao
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-7"&gt;
+&lt;h3&gt;关闭应用&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;Request:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;pengyao:pengyao_pass&lt;span class="w"&gt; &lt;/span&gt;http://127.0.0.1:8080/manager/text/stop?path&lt;span class="o"&gt;=&lt;/span&gt;/examples
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Response:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+OK - Stopped application at context path /examples
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-8"&gt;
+&lt;h3&gt;重启应用&lt;/h3&gt;
+&lt;p&gt;主要应用于更新了类或jar, 但没有配置 &lt;em&gt;reloadable&lt;/em&gt;, 需要手动进行重启应用, 以使其生效&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;Request:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;pengyao:pengyao_pass&lt;span class="w"&gt; &lt;/span&gt;http://127.0.0.1:8080/manager/text/reload?path&lt;span class="o"&gt;=&lt;/span&gt;/examples
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Response:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+OK - Reloaded application at context path /examples
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果应用reload前并不处于running状态, 则会报错:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+FAIL - Encountered exception java.lang.IllegalStateException: Context with name [/examples] has not yet been started
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-9"&gt;
+&lt;h3&gt;卸载应用&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;注意: 该操作将会删除 appBase及对应的war包, 请谨慎使用. 如果只是想暂停某应用, 请使用 &lt;strong&gt;关闭应用(stop)&lt;/strong&gt; 方法&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Request:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;pengyao:pengyao_pass&lt;span class="w"&gt; &lt;/span&gt;http://127.0.0.1:8080/manager/text/undeploy?path&lt;span class="o"&gt;=&lt;/span&gt;/examples
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Response:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+OK - Undeployed application at context path /examples
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果应用不存在,则报错:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+FAIL - No context exists for path /pengyao
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-10"&gt;
+&lt;h3&gt;部署应用&lt;/h3&gt;
+&lt;p&gt;下载测试用例:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;wget&lt;span class="w"&gt; &lt;/span&gt;http://tomcat.apache.org/tomcat-6.0-doc/appdev/sample/sample.war&lt;span class="w"&gt; &lt;/span&gt;-O&lt;span class="w"&gt; &lt;/span&gt;/tmp/sample.war
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;以PUT方式上传war包部署应用&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;Request:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;pengyao:pengyao_pass&lt;span class="w"&gt; &lt;/span&gt;-T&lt;span class="w"&gt; &lt;/span&gt;/tmp/sample.war&lt;span class="w"&gt;  &lt;/span&gt;http://127.0.0.1:8080/manager/text/deploy?path&lt;span class="o"&gt;=&lt;/span&gt;/sample
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Response:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+OK - Deployed application at context path /sample
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;此时将能在${CATALINA_BASE}/webapps/下找到sample.war 及 sample目录&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;以本地(Tomcat Server本地)war包部署应用&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class="first"&gt;Request:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;pengyao:pengyao_pass&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;http://127.0.0.1:8080/manager/text/deploy?path=/foo&amp;amp;war=file:/tmp/sample.war&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;Response:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+OK - Deployed application at context path /foo
+&lt;/pre&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;此时将能在${CATALINA_BASE}/webapps/下找到foo.war 及 foo目录&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="WebServer"></category><category term="webserver"></category><category term="tomcat"></category><category term="manager"></category><category term="字符接口"></category><category term="api"></category></entry><entry><title>常见WebServer日志格式中请求处理时间汇总</title><link href="https://pengyao.org/webserver-request-time-1.html" rel="alternate"></link><published>2013-05-15T00:00:00+08:00</published><updated>2013-05-15T00:00:00+08:00</updated><author><name>pengyao</name></author><id>tag:pengyao.org,2013-05-15:/webserver-request-time-1.html</id><summary type="html">&lt;p class="first last"&gt;不同WebServer的日志格式中对于请求处理时间使用的关键字及单位是不相同的，对常用的WebServer进行汇总.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;如题，直接上表格:&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="25%" /&gt;
+&lt;col width="33%" /&gt;
+&lt;col width="42%" /&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;WebServer&lt;/th&gt;
+&lt;th class="head"&gt;日志格式中对应的关键字&lt;/th&gt;
+&lt;th class="head"&gt;单位&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference external" href="http://nginx.org"&gt;Nginx&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;$request_time&lt;/td&gt;
+&lt;td&gt;秒,小数点后可以精确到毫秒&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference external" href="http://httpd.apache.org"&gt;Apache&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;%D 或 %T&lt;/td&gt;
+&lt;td&gt;%D为微秒, %T为秒&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference external" href="http://tomcat.apache.org"&gt;Tomcat&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;%D 或 %T&lt;/td&gt;
+&lt;td&gt;%D为毫秒, %T为秒&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.caucho.com/resin"&gt;Resin&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;%D 或 %T&lt;/td&gt;
+&lt;td&gt;%D为微秒, %T为秒&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.iis.net"&gt;IIS&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;time-taken&lt;/td&gt;
+&lt;td&gt;微秒&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+</content><category term="WebServer"></category><category term="request time"></category><category term="请求处理时间"></category><category term="webserver"></category><category term="nginx"></category><category term="apache"></category><category term="tomcat"></category><category term="resin"></category><category term="IIS"></category></entry></feed>

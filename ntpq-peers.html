@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="ntp, nptq, peers">
+
+  <title>
+    PengYao's Weblog
+&ndash; ntpq peers字段说明  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/ntpq-peers.html">ntpq peers字段说明</a></h3>
+  </div>
+  <div class="article_text">
+    <p>服务器为了保持时间的统一, 会部署NTPD来进行时间的同步. 对于ntpd当前的状态, 经常会通过 <tt class="docutils literal">ntpq <span class="pre">-p</span></tt> 或 通过 <tt class="docutils literal">ntpq</tt> 的console使用 <tt class="docutils literal">peers</tt> 来进行查看. 输出以下类似结果:</p>
+<pre class="literal-block">
+     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
++42.96.167.209   202.118.1.46     2 u   32   64  377   19.047   19.838  38.791
+*dns1.synet.edu. 202.118.1.46     2 u   16   64  377  120.494   48.096  25.146
++114.113.198.166 202.118.1.46     2 u   24   64  377   29.381    9.855  24.694
++61.135.250.78   223.255.185.2    2 u   24   64  377    4.793   30.086  20.347
+</pre>
+<p>那么每个字段代表什么含义哪?</p>
+<div class="section" id="section-1">
+<h2>字段含义</h2>
+<div class="section" id="tally">
+<h3>tally</h3>
+<p>single-character code indicating current value of the select field of the peer status word</p>
+<p>在每个peer最前边的一个标签字符串, 用来表示该peer的select状态.</p>
+<ul class="simple">
+<li><tt class="docutils literal">*</tt> : sys.peer, 表示该peer已标记为system peer, 以其变量作为系统变量.</li>
+<li><tt class="docutils literal">+</tt> : candidat, 表示该peer存活并且作为候选peer.</li>
+<li><tt class="docutils literal">-</tt> : outlyer, 表示该peer已经被ntp cluster算法标记为偏远的peer.</li>
+<li><tt class="docutils literal">#</tt> : selected, 表示该peer存活, 但并不在前六个同步peer的范围内.</li>
+<li><tt class="docutils literal">.</tt> : excess, 表示该peer不在前十个同步peer的范围内.</li>
+<li><tt class="docutils literal">o</tt> : pps.peer, The peer has been declared the system peer and lends its variables to thesystem variables. However, the actual system synchronization is derived from a pulse-per-second (PPS) signal, either indirectly via the PPS reference clock driver or directly via kernel interface.</li>
+<li><tt class="docutils literal">x</tt> : falsetick, The peer is discarded by the intersection algorithm as a falseticker.</li>
+<li>空字符: space reject, 表示该peer标记为不可达.</li>
+</ul>
+</div>
+<div class="section" id="remote">
+<h3>remote</h3>
+<p>host name (or IP number) of peer</p>
+<p>该peer的主机名或IP地址, 可以在运行 <tt class="docutils literal">ntp</tt> 命令时使用 <tt class="docutils literal"><span class="pre">-n</span></tt> 选项来不进行DNS解析, 直接显示为IP地址</p>
+</div>
+<div class="section" id="refid">
+<h3>refid</h3>
+<p>association ID or kiss code</p>
+<p>该peer的关联ID, 及该peer自身的 system.peer.</p>
+</div>
+<div class="section" id="st">
+<h3>st</h3>
+<p>stratum</p>
+<p>该peer在NTP结构中的层级. NTP为层级结构, 数字越小表示其层级越高, 有效值是0到15.</p>
+</div>
+<div class="section" id="t">
+<h3>t</h3>
+<p>type</p>
+<p>peer类型. <tt class="docutils literal">u</tt> 为单播(unicast), <tt class="docutils literal">b</tt> 为广播(broadcast), <tt class="docutils literal">l</tt> 为本地(local).</p>
+</div>
+<div class="section" id="when">
+<h3>when</h3>
+<p>sec/min/hr since last received packet</p>
+<p>上次收到的该peer的ntp回应包距当前的时间.</p>
+</div>
+<div class="section" id="poll">
+<h3>poll</h3>
+<p>poll interval</p>
+<p>查询间隔, 单位为秒. ntp算法会基于该peer的时间状况对该peer的查询间隔进行动态调整. 如果该peer的时间状态良好, 会在同步过程中加大该同步间隔, 反之则减小查询间隔. 在CentOS 6系统中, 默认的该查询间隔的最小值是64s, 最大值是1024s.</p>
+</div>
+<div class="section" id="reach">
+<h3>reach</h3>
+<p>reach shift register (octal)</p>
+<p>标记该peer的reach计数, 该值是8进制数.</p>
+<p>该值是写本文的直接原因, 因为发现之对该值的理解是错误的. 之前的理解是参照 <a class="reference external" href="http://linux.vbird.org/linux_server/0440ntp.php#server_start">鸟哥书中的描述</a> , <em>已經向上層 NTP 伺服器要求更新的次數</em>. 而实际上该值并不是计数器, 而是表示最近八次ntp查询的reach状态.</p>
+<p>该值为8进制数, 由三个数组组成, 每个八进制对应3比特. 起始值是0, 之后的比特将每次进行完pool之后左移一位(如果收到ntp回应,则设置为1, 反之为0)</p>
+<p>因此通常启动时, 该值的变化为: 0, 1, 3, 17, 37, 77, 177, 377</p>
+<p>以本文中输出为例, 377八进制数换算成2进制为11111111, 即最近八次查询均可达.</p>
+</div>
+<div class="section" id="delay">
+<h3>delay</h3>
+<p>roundtrip delay</p>
+<p>查询往返延迟, 单位是毫秒(milliseconds)</p>
+</div>
+<div class="section" id="offset">
+<h3>offset</h3>
+<p>offset</p>
+<p>peer与本机时间偏差, 单位为毫秒(milliseconds)</p>
+</div>
+<div class="section" id="jitter">
+<h3>jitter</h3>
+<p>jitter</p>
+<p>尚未学习该字段含义</p>
+</div>
+</div>
+<div class="section" id="section-2">
+<h2>参考链接</h2>
+<ul class="simple">
+<li>ntpq手册: <tt class="docutils literal">man ntpq</tt></li>
+<li>ntp手册: <a class="reference external" href="http://doc.ntp.org/4.2.0/ntpq.html">http://doc.ntp.org/4.2.0/ntpq.html</a></li>
+<li>NTP协议: <a class="reference external" href="http://en.wikipedia.org/wiki/Network_Time_Protocol">http://en.wikipedia.org/wiki/Network_Time_Protocol</a></li>
+<li>NTP Debugging Techniques: <a class="reference external" href="http://www.fifi.org/doc/ntp-doc/html/debug.htm">http://www.fifi.org/doc/ntp-doc/html/debug.htm</a></li>
+</ul>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2014-03-03</p>
+    <p>Category: <a href="https://pengyao.org/category/ntp.html">ntp</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/ntp.html">ntp</a>,      <a href="https://pengyao.org/tag/nptq.html">nptq</a>,      <a href="https://pengyao.org/tag/peers.html">peers</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "ntpq-peers.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

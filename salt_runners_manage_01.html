@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="saltstack, runners, manage, status">
+
+  <title>
+    PengYao's Weblog
+&ndash; Salt Runners manage学习  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/salt_runners_manage_01.html">Salt Runners manage学习</a></h3>
+  </div>
+  <div class="article_text">
+    <ul class="simple">
+<li>Salt Runners manage手册: <a class="reference external" href="http://docs.saltstack.com/ref/runners/all/salt.runners.manage.html?highlight=manage#salt.runners.manage">http://docs.saltstack.com/ref/runners/all/salt.runners.manage.html?highlight=manage#salt.runners.manage</a></li>
+<li>Salt Runners manage源码: <a class="reference external" href="https://github.com/saltstack/salt/blob/develop/salt/runners/manage.py">https://github.com/saltstack/salt/blob/develop/salt/runners/manage.py</a></li>
+</ul>
+<p>下午灿哥在群里边分享了 <tt class="docutils literal"><span class="pre">salt-run</span> manage.status</tt> 的用法，用于检查minion当前是否存活(可连接). 这个功能果然不错，索性就打开对应的源码，对manage所有的方法进行一次学习</p>
+<ul class="simple">
+<li>版本: 0.16.3</li>
+</ul>
+<div class="section" id="status">
+<h2>status</h2>
+<ul class="simple">
+<li>使用方法: <tt class="docutils literal"><span class="pre">salt-run</span> manage.status</tt></li>
+<li>功能: 输出所有已知的minions的状态, 以up和down分组输出</li>
+<li>核心代码及补充的代码说明:</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">salt</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">LocalClient</span><span class="p">(</span><span class="n">__opts__</span><span class="p">[</span><span class="s1">&#39;conf_file&#39;</span><span class="p">])</span>
+<span class="n">minions</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;test.ping&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">__opts__</span><span class="p">[</span><span class="s1">&#39;timeout&#39;</span><span class="p">])</span>   <span class="c1">#利用client.cmd对所有的minion发送test.ping指令,用于探测minion是否存活</span>
+
+<span class="n">key</span> <span class="o">=</span> <span class="n">salt</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">Key</span><span class="p">(</span><span class="n">__opts__</span><span class="p">)</span>
+<span class="n">keys</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">list_keys</span><span class="p">()</span>                  <span class="c1"># 利用salt.key获取当前master上有多少minion的key，即获取到完整的minion列表</span>
+
+<span class="n">ret</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">ret</span><span class="p">[</span><span class="s1">&#39;up&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">minions</span><span class="p">)</span>         <span class="c1"># 将执行test.ping有返回值的minion即存活的minion的ID放入up中</span>
+<span class="n">ret</span><span class="p">[</span><span class="s1">&#39;down&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="s1">&#39;minions&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">minions</span><span class="p">))</span>   <span class="c1">#完整的minion列表减去存活的minion就是down掉/无法连接的minion喽</span>
+<span class="k">if</span> <span class="n">output</span><span class="p">:</span>
+    <span class="n">salt</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">display_output</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">__opts__</span><span class="p">)</span>    <span class="c1"># 输出</span>
+<span class="k">return</span> <span class="n">ret</span>
+</pre></div>
+<ul class="simple">
+<li>总结: 该方法果然很给力，从此妈妈再也不担心不知道minion是否存活喽</li>
+</ul>
+</div>
+<div class="section" id="key-regen">
+<h2>key_regen</h2>
+<ul class="simple">
+<li>使用方法: <tt class="docutils literal"><span class="pre">salt-run</span> manage.key_regen</tt></li>
+<li>功能: 重新生成环境下的所有key (副作用甚强，慎用，慎用, 除非你知道在做什么)</li>
+<li>核心代码及补充的代码说明:</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="n">minions</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;saltutil.regen_keys&#39;</span><span class="p">)</span>     <span class="c1"># 执行saltutil.regen_keys，重新生成key</span>
+</pre></div>
+<ul class="simple">
+<li>总结： 慎用，慎用，慎用</li>
+</ul>
+</div>
+<div class="section" id="down">
+<h2>down</h2>
+<ul class="simple">
+<li>使用方法: <tt class="docutils literal"><span class="pre">salt-run</span> manage.down</tt></li>
+<li>功能: 输出down掉/无法连接的minion</li>
+<li>核心代码及补充的代码说明:</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="n">ret</span> <span class="o">=</span> <span class="n">status</span><span class="p">(</span><span class="n">output</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;down&#39;</span><span class="p">,</span> <span class="p">[])</span>   <span class="c1"># 直接用之前的status方法，然后获取down的minion列表</span>
+</pre></div>
+<ul class="simple">
+<li>总结: 函数编程果然是王道，省时省力，直接通过该方法查询down掉的minion，再也不麻烦了</li>
+</ul>
+</div>
+<div class="section" id="up">
+<h2>up</h2>
+<ul class="simple">
+<li>使用方法: <tt class="docutils literal"><span class="pre">salt-run</span> manage.up</tt></li>
+<li>功能: 输出存活的minion</li>
+<li>核心代码及补充的代码说明:</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="n">ret</span> <span class="o">=</span> <span class="n">status</span><span class="p">(</span><span class="n">output</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;up&#39;</span><span class="p">,</span> <span class="p">[])</span>   <span class="c1"># 和上边直接down一样，不过这次的需求变成了up而已</span>
+</pre></div>
+<ul class="simple">
+<li>总结: 和楼上类似</li>
+</ul>
+</div>
+<div class="section" id="versions">
+<h2>versions</h2>
+<ul class="simple">
+<li>使用方法: <tt class="docutils literal"><span class="pre">salt-run</span> manage.versions</tt></li>
+<li>功能: 输出所有存活的minion的版本和master的版本对比情况</li>
+<li>核心代码及补充的代码说明:</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="n">minions</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;test.version&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">__opts__</span><span class="p">[</span><span class="s1">&#39;timeout&#39;</span><span class="p">])</span>  <span class="c1"># 通过client.cmd方法下发所有minion需要执行test.version(输出版本号)的指令</span>
+
+<span class="n">labels</span> <span class="o">=</span> <span class="p">{</span>                        <span class="c1"># 定义版本对比的描述</span>
+    <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;Minion requires update&#39;</span><span class="p">,</span>
+    <span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;Up to date&#39;</span><span class="p">,</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;Minion newer than master&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">version_status</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="n">comps</span> <span class="o">=</span> <span class="n">salt</span><span class="o">.</span><span class="n">__version__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>    <span class="c1"># 获取master version</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">comps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">master_version</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">comps</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">master_version</span> <span class="o">=</span> <span class="n">salt</span><span class="o">.</span><span class="n">__version__</span>
+<span class="k">for</span> <span class="n">minion</span> <span class="ow">in</span> <span class="n">minions</span><span class="p">:</span>
+    <span class="n">comps</span> <span class="o">=</span> <span class="n">minions</span><span class="p">[</span><span class="n">minion</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">comps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">minion_version</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">comps</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">minion_version</span> <span class="o">=</span> <span class="n">minions</span><span class="p">[</span><span class="n">minion</span><span class="p">]</span>
+    <span class="n">ver_diff</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="n">minion_version</span><span class="p">,</span> <span class="n">master_version</span><span class="p">)</span>   <span class="c1"># 通过python的cmp方法对版本号进行对比</span>
+
+    <span class="k">if</span> <span class="n">ver_diff</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">version_status</span><span class="p">:</span>
+        <span class="n">version_status</span><span class="p">[</span><span class="n">ver_diff</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">version_status</span><span class="p">[</span><span class="n">ver_diff</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">minion</span><span class="p">)</span>
+
+<span class="n">ret</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">version_status</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">minion</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">version_status</span><span class="p">[</span><span class="n">key</span><span class="p">]):</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">minion</span><span class="p">)</span>
+
+<span class="n">salt</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">display_output</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">__opts__</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">ret</span>
+</pre></div>
+<ul class="simple">
+<li>总结: 利用本方法，哪些minion需要升级立马得知，谁用谁知道啊!</li>
+</ul>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-09-24</p>
+    <p>Category: <a href="https://pengyao.org/category/saltstack.html">SaltStack</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/saltstack.html">saltstack</a>,      <a href="https://pengyao.org/tag/runners.html">runners</a>,      <a href="https://pengyao.org/tag/manage.html">manage</a>,      <a href="https://pengyao.org/tag/status.html">status</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "salt_runners_manage_01.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

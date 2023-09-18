@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="saltstack, multi-master, 多master, howto">
+
+  <title>
+    PengYao's Weblog
+&ndash; 【翻译】如何建立多Master的SaltStack环境  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/howto_configure_a_multi_master_saltstack_setup.html">【翻译】如何建立多Master的SaltStack环境</a></h3>
+  </div>
+  <div class="article_text">
+    <ul class="simple">
+<li>英文原文出处: <a class="reference external" href="http://intothesaltmine.org/how_to_configure_a_multi_master_saltstack_setup.html">http://intothesaltmine.org/how_to_configure_a_multi_master_saltstack_setup.html</a></li>
+</ul>
+<p>0.16.0版本的发布，带来了minion可以连接多Master的特性. 这种方式称为多master( <tt class="docutils literal"><span class="pre">multi-master</span></tt> )配置, 使环境中的SaltStack冗余。在这种配置下，Salt Minions将连接所有配置的Salt Master. 本文将带你了解如何建立多Master的环境.</p>
+<div class="section" id="master-keys">
+<h2>Master Keys</h2>
+<p>在建立多Master的配置中，主要的一点就是所有的Master使用同样的private key. 这些key将在Master第一次启动时自动生成。 因此在多Master环境建立时，需要从原始的(original) Master上拷贝其private key至第二个Master以提供它启动时自动生成的那个, 以此类推.</p>
+<p>Master的private key存储在Master本地的 <tt class="docutils literal">pki_dir</tt> 目录下. 默认的目录是 <tt class="docutils literal">/etc/salt/pki/master/master.pem</tt> . 将该key拷贝到新增的master上. 需要注意的是，在拷贝的时候，需要确保新增的master上并没有minion连接进来.</p>
+</div>
+<div class="section" id="configure-minions">
+<h2>Configure Minions</h2>
+<p>当配置多Master时，Minion需要知道需要连接的每个Master的网络地址. 需要在Minion的配置文件中进行配置，默认的配置文件是 <tt class="docutils literal">/etc/salt/minion</tt> 。 找到 <tt class="docutils literal">master</tt> 配置项, 更新需要新增的Master.</p>
+<p>下边是一个多Master的配置例子:</p>
+<div class="highlight"><pre><span></span><span class="nt">master</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">master1.example.tld</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">master2.example.tld</span>
+</pre></div>
+<p>配置完毕后，需要重启Minion以确保配置生效. 此时所有的Master均可以控制你的minions.</p>
+</div>
+<div class="section" id="sharing-files-between-masters">
+<h2>Sharing Files Between Masters</h2>
+<p>Salt并不会自动在Master间共享文件. 本小节将带你了解Master间哪些文件需要同步以保持一致.</p>
+<div class="section" id="minion-keys">
+<h3>Minion Keys</h3>
+<p>Minion的keys需要每个Master都进行accept. 可以使用 <tt class="docutils literal"><span class="pre">salt-key</span></tt> 手动接接受minion的key， 也可以在Master间保持key目录的同步. 需要同步的目录有:</p>
+<ul class="simple">
+<li>/etc/salt/pki/master/minions</li>
+<li>/etc/salt/pki/master/minions_pre</li>
+<li>/etc/salt/pki/master/minions_rejected</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">直接共享 <tt class="docutils literal">/etc/salt/master</tt> 目录是强烈反对的. 允许外部访问 master.pem key将带来严重的安全风险</p>
+</div>
+</div>
+<div class="section" id="file-roots">
+<h3>file_roots</h3>
+<p><tt class="docutils literal">file_roots</tt> 的内容需要在Master间同步以保持一致. 这里存放Salt State配置管理文件. 推荐同步内容使用 <tt class="docutils literal">gitfs</tt> backend，或者直接将 <tt class="docutils literal">file_roots</tt> 存储在共享存储上.</p>
+</div>
+<div class="section" id="pillar-roots">
+<h3>pillar_roots</h3>
+<p>同理，对于 <tt class="docutils literal">pillar_roots</tt> 也是如此，需要保持Pillar数据一致.</p>
+</div>
+<div class="section" id="master-configuration">
+<h3>Master Configuration</h3>
+<p>最后你需要确保有关Master的配置选项在所有Master间是同步的. 除非你知道你不需要这么做,你需要保证以下的设置Master间是同步的:</p>
+<blockquote>
+<ul class="simple">
+<li>external_auth</li>
+<li>client_acl</li>
+<li>peer</li>
+<li>peer_run</li>
+</ul>
+</blockquote>
+</div>
+</div>
+<div class="section" id="conslusion">
+<h2>Conslusion</h2>
+<p>多Master环境配置提供了控制Minions的冗余性，配置相当简单. 只需要保证key及State文件在你的多Master间是同步的，你就可以透明的在多Master上控制你的Minions</p>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-09-25</p>
+    <p>Category: <a href="https://pengyao.org/category/saltstack.html">SaltStack</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/saltstack.html">saltstack</a>,      <a href="https://pengyao.org/tag/multi-master.html">multi-master</a>,      <a href="https://pengyao.org/tag/duo-master.html">多master</a>,      <a href="https://pengyao.org/tag/howto.html">howto</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "howto_configure_a_multi_master_saltstack_setup.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

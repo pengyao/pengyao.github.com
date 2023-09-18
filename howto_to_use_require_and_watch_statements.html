@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="saltstack, require, watch, order">
+
+  <title>
+    PengYao's Weblog
+&ndash; 【翻译】在SaltStack中如何使用require及watch语法  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/howto_to_use_require_and_watch_statements.html">【翻译】在SaltStack中如何使用require及watch语法</a></h3>
+  </div>
+  <div class="article_text">
+    <ul class="simple">
+<li>原文出处: <a class="reference external" href="http://intothesaltmine.org/how_to_use_require_and_watch_statements.html">http://intothesaltmine.org/how_to_use_require_and_watch_statements.html</a></li>
+<li>译者: <a class="reference external" href="http://pengyao.org/">pengyao</a></li>
+</ul>
+<p>在SaltStack配置关系系统中支持许多强大的选项。无论是简单的如软件包的安装还是使用模板和条件语句. SaltStack States可以从小巧逐步变得很复杂。幸运的是SaltStack提供一种用于解决States间依赖关系的方法. 本小节将讲述如何使用 <tt class="docutils literal">require</tt>、<tt class="docutils literal">require_in</tt>、<tt class="docutils literal">watch</tt>、<tt class="docutils literal">watch_in</tt></p>
+<div class="section" id="requisites">
+<h2>Requisites</h2>
+<p>在SaltStack的世界中，requisites(译者注: 该词没找到合适的中文翻译，暂时使用英文原词)有两种类型，直接的requisites和&quot;requisite_ins&quot;。这些requisites是方向性的(directional)，用于指定说&quot;我依赖于某些东西&quot;或&quot;一些东西依赖于我&quot;</p>
+<div class="section" id="require">
+<h3>require</h3>
+<p>下边是使用 <tt class="docutils literal">require</tt> 语法的例子:</p>
+<div class="highlight"><pre><span></span><span class="nt">vim</span><span class="p">:</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">pkg.installed</span>
+
+<span class="nt">/etc/vimrc</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file.managed</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">salt://edit/vimrc</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">require</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">pkg</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vim</span>
+</pre></div>
+<p>在这个例子中， <tt class="docutils literal">/etc/vimrc</tt> 文件并不会被placed(managed)，直到 <tt class="docutils literal">vim</tt> 软件包已安装</p>
+</div>
+<div class="section" id="require-in">
+<h3>require_in</h3>
+<p>下边是同样的例子，只是这次使用了 <tt class="docutils literal">require_in</tt> :</p>
+<div class="highlight"><pre><span></span><span class="nt">vim</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">pkg.installed</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">require_in</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/vimrc</span>
+
+<span class="nt">/etc/vimrc</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file.managed</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">salt://edit/vimrc</span>
+</pre></div>
+<p>这个例子的效果是相同的，在 <tt class="docutils literal">vim</tt> 中指定了 <tt class="docutils literal">/etc/vimrc</tt> 依赖于我</p>
+<p>在最后，将会创建一个从属(dependency)map，并以有限的(finite)及可预见的(predictable)顺序执行.</p>
+</div>
+<div class="section" id="watch">
+<h3>watch</h3>
+<p>下面将以 <tt class="docutils literal">watch</tt> 语法举例，在本例中，运行中的 <tt class="docutils literal">ntpd</tt> 服务将会关注 <tt class="docutils literal">/etc/ntp.conf</tt> 文件的变化，如果发生变化，将会触发重启服务的操作.</p>
+<div class="highlight"><pre><span></span><span class="nt">ntpd</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">service.running</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">watch</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/nto.conf</span>
+
+<span class="nt">/etc/ntp.conf</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file.managed</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">salt://ntp/files/ntp.conf</span>
+</pre></div>
+</div>
+<div class="section" id="watch-in">
+<h3>watch_in</h3>
+<p>在接下来例子中， <tt class="docutils literal">/etc/ntp.conf</tt> 声明(declaring)它应该被 <tt class="docutils literal">ntpd</tt> 服务watch</p>
+<div class="highlight"><pre><span></span><span class="nt">ntpd</span><span class="p">:</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">service.running</span>
+
+<span class="nt">/etc/ntp.conf</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file.managed</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">salt://ntp/files/ntp.conf</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">watch_in</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">service</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ntpd</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="conclusion">
+<h2>总结(Conclusion)</h2>
+<p>在State规则中，你可以通过强大的 <tt class="docutils literal">require</tt> 、 <tt class="docutils literal">require_in</tt> 、 <tt class="docutils literal">watch</tt> 及 <tt class="docutils literal">watch_in</tt> 指定state间的依赖关系. 无论是一个服务应该watch一个文件的变化，还是一个服务运行前必须确保软件包已安装都可以通过它们来指定state的逻辑执行顺序.</p>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2013-09-18</p>
+    <p>Category: <a href="https://pengyao.org/category/saltstack.html">SaltStack</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/saltstack.html">saltstack</a>,      <a href="https://pengyao.org/tag/require.html">require</a>,      <a href="https://pengyao.org/tag/watch.html">watch</a>,      <a href="https://pengyao.org/tag/order.html">order</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "howto_to_use_require_and_watch_statements.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="saltstack, returner, master, master_job_cache">
+
+  <title>
+    PengYao's Weblog
+&ndash; Salt Master外部Job Cache配置  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/saltstack-master-external-job-cache.html">Salt Master外部Job Cache配置</a></h3>
+  </div>
+  <div class="article_text">
+    <p>SaltStack 2014.7之前, Minion端的执行结果想存储在外部系统中, 需要借助returner进行配置. 而returner的工作方式是由minion端直接连接对应的returner, 在分布式环境中由于网络等限制,该方式并不友好.</p>
+<p>而在Master端, Job Cache会以文件的形式存储在Master本地磁盘, 对第三方系统并不友好. 基于此, 之前有分享过 <a class="reference external" href="http://pengyao.org/saltstack_master_retuner_over_event_system.html">基于Salt Event系统构建Master端returner</a> , 需要启动另外一个进程, 进行监听Salt Event接口, 并将结果存储在第三方系统中. 刚好看到2014.7.0中master端增加了 <a class="reference external" href="http://docs.saltstack.com/en/latest/ref/configuration/master.html#master-job-cache">master_job_cache</a> 参数, 可以直接外放Job Cache, 就做个测试, 测试下这个功能.</p>
+<div class="section" id="section-1">
+<h2>环境说明</h2>
+<ul class="simple">
+<li>Salt Version: <em>2014.7.0</em></li>
+<li>OS: CentOS 6.5 X86_64 (with <a class="reference external" href="https://fedoraproject.org/wiki/EPEL">EPEL</a>)</li>
+<li>本次测试结果将存储在MySQL中, 为了方便测试, 已在Master本地部署了MySQL Server</li>
+</ul>
+</div>
+<div class="section" id="section-2">
+<h2>开工</h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">以下操作如非特别注明, 均在Master端进行</p>
+</div>
+<div class="section" id="section-3">
+<h3>前置配置</h3>
+<p>安装MySQLdb依赖:</p>
+<div class="highlight"><pre><span></span>yum<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>MySQL-python
+</pre></div>
+<p>配置本次测试需要使用的数据库及用户:</p>
+<div class="highlight"><pre><span></span><span class="c1"># 创建salt数据库</span>
+mysql<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;create database salt&#39;</span>
+<span class="c1"># 创建用于连接salt数据库的用户</span>
+mysql<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;&quot;grant all on salt.* to salt@localhost identified by &quot;salt_pass&#39;</span><span class="p">;</span>
+<span class="c1"># 将数据库配置添加至master配置文件中</span>
+</pre></div>
+<p>创建用于存储Job的数据库表结构:</p>
+<pre class="literal-block">
+USE `salt`;
+
+--
+-- Table structure for table `jids`
+--
+
+DROP TABLE IF EXISTS `jids`;
+CREATE TABLE `jids` (
+  `jid` varchar(255) NOT NULL,
+  `load` mediumtext NOT NULL,
+  UNIQUE KEY `jid` (`jid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Table structure for table `salt_returns`
+--
+
+DROP TABLE IF EXISTS `salt_returns`;
+CREATE TABLE `salt_returns` (
+  `fun` varchar(50) NOT NULL,
+  `jid` varchar(255) NOT NULL,
+  `return` mediumtext NOT NULL,
+  `id` varchar(255) NOT NULL,
+  `success` varchar(10) NOT NULL,
+  `full_ret` mediumtext NOT NULL,
+  `alter_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY `id` (`id`),
+  KEY `jid` (`jid`),
+  KEY `fun` (`fun`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</pre>
+</div>
+<div class="section" id="master">
+<h3>配置Master</h3>
+<p>将MySQL连接权限等信息添加到Salt Master配置文件中:</p>
+<div class="highlight"><pre><span></span><span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;\n\n# MySQL\nmysql.host: &#39;localhost&#39;\nmysql.user: &#39;salt&#39;\nmysql.pass: &#39;salt_pass&#39;\nmysql.db: &#39;salt&#39;\nmysql.port: 3306&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>/etc/salt/master
+</pre></div>
+<p>配置master_job_cache选项, 以使将Job结果存储在MySQL中:</p>
+<div class="highlight"><pre><span></span><span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;\n\n# Master Job Cache\nmaster_job_cache: mysql&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>/etc/salt/master
+</pre></div>
+<p>重启Salt Master, 以使配置生效:</p>
+<div class="highlight"><pre><span></span>service<span class="w"> </span>salt-master<span class="w"> </span>restart
+</pre></div>
+</div>
+<div class="section" id="section-4">
+<h3>测试</h3>
+<p>对主机执行test.ping:</p>
+<div class="highlight"><pre><span></span>salt<span class="w"> </span><span class="s1">&#39;*&#39;</span><span class="w"> </span>test.ping<span class="w"> </span>-v
+</pre></div>
+<p>输出结果:</p>
+<pre class="literal-block">
+Executing job with jid 20141120060202308159
+-------------------------------------------
+
+minion-01.example.com:
+    True
+</pre>
+<p>查询MySQL jids表数据:</p>
+<div class="highlight"><pre><span></span>mysql<span class="w"> </span>salt<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;select * from jids\G&#39;</span>
+</pre></div>
+<p>输出结果:</p>
+<pre class="literal-block">
+*************************** 1. row ***************************
+jid: 20141120060202308159
+load: {&quot;tgt_type&quot;: &quot;glob&quot;, &quot;jid&quot;: &quot;20141120060202308159&quot;, &quot;cmd&quot;: &quot;publish&quot;, &quot;tgt&quot;: &quot;*&quot;, &quot;kwargs&quot;: {&quot;show_timeout&quot;: false, &quot;show_jid&quot;: false}, &quot;ret&quot;: &quot;&quot;, &quot;user&quot;: &quot;sudo_vagrant&quot;, &quot;arg&quot;: [], &quot;fun&quot;: &quot;test.ping&quot;}
+</pre>
+<p>查询MySQL salt_returns表数据:</p>
+<div class="highlight"><pre><span></span>mysql<span class="w"> </span>salt<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;select * from salt_returns\G&#39;</span>
+</pre></div>
+<p>输出结果:</p>
+<pre class="literal-block">
+*************************** 1. row ***************************
+fun: test.ping
+jid: 20141120060202308159
+return: true
+id: minion-01.example.com
+success: 1
+full_ret: {&quot;fun_args&quot;: [], &quot;jid&quot;: &quot;20141120060202308159&quot;, &quot;return&quot;: true, &quot;retcode&quot;: 0, &quot;success&quot;: true, &quot;cmd&quot;: &quot;_return&quot;, &quot;_stamp&quot;: &quot;2014-11-20T06:02:02.533850&quot;, &quot;fun&quot;: &quot;test.ping&quot;, &quot;id&quot;: &quot;minion-01.example.com&quot;}
+alter_time: 2014-11-20 06:02:02
+</pre>
+<p>Job执行结果已经按照之前的配置存储到了MySQL中, 达到预期效果</p>
+</div>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2014-11-20</p>
+    <p>Category: <a href="https://pengyao.org/category/saltstack.html">SaltStack</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/saltstack.html">saltstack</a>,      <a href="https://pengyao.org/tag/returner.html">returner</a>,      <a href="https://pengyao.org/tag/master.html">master</a>,      <a href="https://pengyao.org/tag/master_job_cache.html">master_job_cache</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "saltstack-master-external-job-cache.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

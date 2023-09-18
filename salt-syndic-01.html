@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <!-- ## for client-side less
+  <link rel="stylesheet/less" type="text/css" href="https://pengyao.org/theme/css/style.less">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/1.7.3/less.min.js" type="text/javascript"></script>
+  -->
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/style.css">
+  <link rel="stylesheet" type="text/css" href="https://pengyao.org/theme/css/pygments.css">
+  <!--  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono"> -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="pengyao">
+  <meta name="description" content="Posts and writings by pengyao">
+
+  <link href="https://pengyao.org/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="PengYao's Weblog Atom" />
+
+<meta name="keywords" content="saltstack, zeromq, syndic">
+
+  <title>
+    PengYao's Weblog
+&ndash; Salt中Syndic那点事  </title>
+
+
+<script type="text/javascript">
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F87206c0d4319a1f476378557aa7c50ca' type='text/javascript'%3E%3C/script%3E"));
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="https://pengyao.org">
+        <img src="https://pengyao.org/user_logo.jpg" alt="logo">
+      </a>
+      <h2><a href="https://pengyao.org">pengyao</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://saltstack.cn/" target="_blank">中国SaltStack用户组</a></li>
+        <li><a href="http://www.jsxubar.info/" target="_blank">静思学吧</a></li>
+        <li><a href="http://heylinux.com/" target="_blank">HeyLinux</a></li>
+        <li><a href="https://github.com/pengyao" target="_blank">Github</a></li>
+        <li><a href="http://weibo.com/yaoxuanwei" target="_blank">Weibo</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p>
+      <a href="https://pengyao.org">Index</a> &brvbar; <a href="https://pengyao.org/archives.html">Archives</a>
+      &brvbar; <a href="https://pengyao.org/feeds/all.atom.xml">Atom</a>
+      </p>
+    </header>
+
+<article>
+  <div class="article_title">
+    <h3><a href="https://pengyao.org/salt-syndic-01.html">Salt中Syndic那点事</a></h3>
+  </div>
+  <div class="article_text">
+    <div class="section" id="section-1">
+<h2>基本简介</h2>
+<p><a class="reference external" href="https://github.com/saltstack/salt">Salt</a> 在 <a class="reference external" href="http://docs.saltstack.com/en/latest/topics/releases/0.9.0.html">0.9.0版本</a> 中增加了 <a class="reference external" href="http://docs.saltstack.com/en/latest/topics/topology/syndic.html">Syndic</a> 特性. Syndic建立在中心Master和Minions之间, 并允许多层分级Syndic, 使Salt拓扑可以变得更为灵活. 那么Syndic是如何工作的? 当前有哪些优势和局限哪?</p>
+</div>
+<div class="section" id="section-2">
+<h2>前置阅读</h2>
+<ul class="simple">
+<li><a class="reference external" href="http://zguide.zeromq.org/page:all#Chapter-Sockets-and-Patterns">0MQ - The Guide: Sockets and Patterns</a></li>
+<li><a class="reference external" href="http://pengyao.org/salt-zeromq-01.html">Salt中ZeroMQ那点事</a></li>
+</ul>
+</div>
+<div class="section" id="section-3">
+<h2>环境说明</h2>
+<ul class="simple">
+<li>CentOS6.4</li>
+<li>Salt <a class="reference external" href="https://github.com/saltstack/salt/tree/v2014.1.10/salt">2014.1.10</a> ,默认配置</li>
+</ul>
+</div>
+<div class="section" id="syndic">
+<h2>安装配置Syndic</h2>
+<div class="section" id="syndic-1">
+<h3>安装Syndic</h3>
+<p>Syndic是Master的一个小组件, 位于salt-master软件包中, 安装salt-master时就安装了syndic</p>
+<div class="highlight"><pre><span></span>yum<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>salt-master
+</pre></div>
+</div>
+<div class="section" id="syndic-2">
+<h3>配置Syndic</h3>
+<p>默认Syndic的配置文件位于Master配置文件中( <em>/etc/salt/master</em> ), 需要配置的参数也非常简单:</p>
+<blockquote>
+<ul class="simple">
+<li>syndic_master: 配置MasterOfMaster的IP地址</li>
+<li>syndic_master_port: 配置MasterOfMaster的ret_port(默认为4506)</li>
+<li>syndic_log_file: 指定syndic日志文件(绝对路径)</li>
+<li>syndic_pidfile: 指定syndic pid文件(绝对路径)</li>
+</ul>
+</blockquote>
+<p>同时MasterOfMaster需要将 <em>order_masters</em> 选项设置为 <em>True</em>, 为了使配置生效, 需要对其进行重启.</p>
+</div>
+<div class="section" id="syndic-3">
+<h3>运行Syndic</h3>
+<div class="highlight"><pre><span></span>chkconfig<span class="w"> </span>salt-master<span class="w"> </span>on
+chkconfig<span class="w"> </span>salt-syndic<span class="w"> </span>on
+service<span class="w"> </span>salt-master<span class="w"> </span>restart
+service<span class="w"> </span>salt-syndic<span class="w"> </span>restart
+</pre></div>
+</div>
+</div>
+<div class="section" id="syndic-4">
+<h2>Syndic是如何工作的?</h2>
+<p>Syndic本质上是一个特殊的Minion, 这不, 其代码就位于 <a class="reference external" href="https://github.com/saltstack/salt/blob/v2014.1.10/salt/minion.py#L1516">minion.py</a> 中.</p>
+<p>Syndic需要在本地运行Master, 并将需要管理的Minions的master指向syndic所在的主机. Syndic是这么来工作的:</p>
+<ol class="arabic simple">
+<li>冒充Minion, 建立连接MasterOfMaster PUB接口的SUB接口, 订阅所有来自MasterOfMaster下发的任务</li>
+</ol>
+<div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">socket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUB</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUBSCRIBE</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">IDENTITY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">master_pub</span><span class="p">)</span>
+</pre></div>
+<ol class="arabic simple" start="2">
+<li>接收到MasterOfMaster下发的数据后, 首先进行解密, 解密完成后, 将其扔到本地的Master接口上进行二次下发:</li>
+</ol>
+<div class="highlight"><pre><span></span><span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">serial</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">recv</span><span class="p">())</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">_handle_payload</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+</pre></div>
+<div class="highlight"><pre><span></span><span class="c1"># Send out the publication</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">pub</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;tgt&#39;</span><span class="p">],</span>
+               <span class="n">data</span><span class="p">[</span><span class="s1">&#39;fun&#39;</span><span class="p">],</span>
+               <span class="n">data</span><span class="p">[</span><span class="s1">&#39;arg&#39;</span><span class="p">],</span>
+               <span class="n">data</span><span class="p">[</span><span class="s1">&#39;tgt_type&#39;</span><span class="p">],</span>
+               <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ret&#39;</span><span class="p">],</span>
+               <span class="n">data</span><span class="p">[</span><span class="s1">&#39;jid&#39;</span><span class="p">],</span>
+               <span class="n">data</span><span class="p">[</span><span class="s1">&#39;to&#39;</span><span class="p">])</span>
+</pre></div>
+<ol class="arabic simple" start="3">
+<li>在2中进行的二次下发之后, 监听本地event接口, 获取旗下Minions的返回:</li>
+</ol>
+<div class="highlight"><pre><span></span><span class="n">event</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">full</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+<p>并将返回发送给MasterOfMaster Ret接口</p>
+<div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">_return_pub</span><span class="p">(</span><span class="n">jids</span><span class="p">[</span><span class="n">jid</span><span class="p">],</span> <span class="s1">&#39;_syndic_return&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="syndic-5">
+<h2>Syndic的优势和局限</h2>
+<div class="section" id="section-4">
+<h3>优势</h3>
+<ol class="arabic simple">
+<li>通过Syndic, 可以建立多层级的Salt拓扑, Syndic下的Minions即可通过Syndic所在的Master进行管理, 也可以通过MasterOfMaster及更高层级的Master进行管理, 架构变得异常灵活.</li>
+<li>由于Syndic只订阅MasterOfMaster下发下来的任务, 对于文件服务等, Syndic本地需要进行配置,可以有效的降低MasterOfMaster的负载</li>
+</ol>
+</div>
+<div class="section" id="section-5">
+<h3>局限</h3>
+<p>由于Syndic弱化了MasterOfMaster, 采用区域自治方法. 在某些应用场景下, 会有局限性:</p>
+<ol class="arabic simple">
+<li>优势2中的优势, 也带来了局限, 需要保证Syndic上的file_roots及pillar_roots与MasterOfMaster是一致的. 为了解决这个问题, 我们在使用Syndic时采用了 <a class="reference external" href="http://docs.saltstack.com/en/latest/topics/tutorials/gitfs.html">gitfs backend</a></li>
+<li>由于Syndic管理了旗下Minions的认证, 使MasterOfMaster并不知道有多少Syndic主机, Syndic下边有多少Minions. 在MasterOfMaster及更高层级的Master上使用salt命令行下发远程执行命令时, 如果Syndic此时与MasterOfMaster网络抖动, 导致没有收到消息或延迟收到消息, MasterOfMaster并不知情; Syndic并没有返回结果或延迟返回结果, MasterOfMaster并不能感知到, 会导致结果不完整. 如果没有其他验证机制, 将变得不可控. 官方提供的解决方案是增大 <em>syndic_wait</em> 选项, 但个人认为只能缓解,并不能根治本问题.</li>
+</ol>
+</div>
+</div>
+
+  </div>
+  <div class="article_meta">
+    <p>Posted on: 2014-09-07</p>
+    <p>Category: <a href="https://pengyao.org/category/saltstack.html">SaltStack</a>
+ &ndash; Tags:
+      <a href="https://pengyao.org/tag/saltstack.html">saltstack</a>,      <a href="https://pengyao.org/tag/zeromq.html">zeromq</a>,      <a href="https://pengyao.org/tag/syndic.html">syndic</a>    </p>
+  </div>
+
+  <div id="article_comments">
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_identifier = "salt-syndic-01.html";
+        (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://pengyao-blog.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+         })();
+    </script>
+  </div>
+
+</article>
+
+
+    <div id="ending_message">
+      <p>&copy; pengyao. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/gfidente/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>
