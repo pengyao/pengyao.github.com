@@ -3,14 +3,14 @@
 
 AUTHOR = u'pengyao'
 SITENAME = u"PengYao's Weblog"
-SITEURL = 'http://pengyao.org'
+SITEURL = 'https://pengyao.org'
 
 TIMEZONE = 'Asia/Taipei'
 
 
 DEFAULT_LANG = u'zh'
 DEFAULT_DATE_FORMAT = '%Y-%m-%d'
-DEFAULT_DATE = (2013,01,01,01,01,01)
+DEFAULT_DATE = (2013, 1, 1, 1, 1, 1)
 
 EXTRA_PATH_METADATA = {
   'extra/favicon.ico': {'path': 'favicon.ico'},
